@@ -1,0 +1,19 @@
+{
+  "appId": "com.example.ledger",
+  "appName": "罐头记账",
+  "version": "1.3.0",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  },
+  "server": {
+    "allowNavigation": [
+      "*"
+    ],
+    "cleartext": true
+  },
+  "loggingBehavior": "production"
+}
