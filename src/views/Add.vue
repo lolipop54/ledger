@@ -99,7 +99,7 @@ const form = ref({
         minute: '2-digit',
         second: '2-digit',
         hour12: false
-      }).replace(/\//g, '-')
+      }).replace(/\//g, '-').slice(0,10)
 });
 
 const expenseCategories = [
@@ -192,7 +192,7 @@ const ymd = ref([
   String(now.getMonth() + 1).padStart(2, '0'),
   String(now.getDate()).padStart(2, '0')
 ]);
-const dateText = computed(() => form.value.date?.slice(0,10));
+const dateText = computed(() => form.value.date);
 const onPickDate = (arg, event) => {
   // 阻止事件冒泡，防止触发handleClickOutside函数
   if (event && event.stopPropagation) {
@@ -212,7 +212,7 @@ const onPickDate = (arg, event) => {
         minute: '2-digit',
         second: '2-digit',
         hour12: false
-      }).replace(/\//g, '-');
+      }).replace(/\//g, '-').slice(0,10);
       
   ymd.value = [String(y), String(m).padStart(2,'0'), String(d).padStart(2,'0')];
   showDate.value = false;
@@ -254,7 +254,7 @@ const openToday = () => {
         minute: '2-digit',
         second: '2-digit',
         hour12: false
-      }).replace(/\//g, '-');
+      }).replace(/\//g, '-').slice(0,10);
   ymd.value = [String(t.getFullYear()), String(t.getMonth()+1).padStart(2,'0'), String(t.getDate()).padStart(2,'0')];
 };
 

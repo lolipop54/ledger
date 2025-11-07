@@ -456,7 +456,6 @@ export function useLedger() {
   const summarize = (list) => {
     const expense = list.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
     const income = list.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
-    console.log(expense);
     return { expense, income, balance: income - expense };
   };
 

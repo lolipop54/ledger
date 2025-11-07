@@ -87,8 +87,34 @@
         placeholder="请输入备注"
         clearable
       />
+      <van-field 
+        label="日期时间" 
+        v-model="editForm.date"
+        readonly
+        clickable
+        @click="showDatePicker = true"
+        right-icon="calendar"
+      />
     </div>
   </van-dialog>
+
+  <!-- 日期时间选择器 - 使用新的实现方式 -->
+   <van-popup v-model:show="showDatePicker" round position="bottom" round-radius="24">
+      <van-date-picker
+        title="选择日期"
+        :columns-type="['year','month','day']"
+        :min-date="minDate"
+        :max-date="maxDate"
+        v-model="currentDateTime"
+        @confirm="handleDateTimeConfirm"
+        @cancel="showDatePicker = false"
+        @click.stop
+        @touchmove.stop
+        :confirm-button-text="'确定'"
+        :cancel-button-text="'取消'"
+        :confirm-button-color="'#FFD84D'"
+      />
+    </van-popup>
 </template>
 
 <script setup>
@@ -104,16 +130,43 @@ const emit = defineEmits(['remove', 'update']);
 // 编辑相关变量
 const showEditDialog = ref(false);
 const showCategoryPicker = ref(false);
+const showDatePicker = ref(false);
 const editForm = ref({
   amount: '',
   type: '',
   category: '',
-  note: ''
+  note: '',
+  date: ''
 });
 
 // 类别列表定义
 const expenseCategories = ['餐饮','买菜','购物','交通','娱乐','通讯','零食','日用','蔬菜','水果','运动','服饰','美容','住房','居家','孩子','长辈','旅行','聚会','其他'];
 const incomeCategories = ['工资','兼职','理财','其他'];
+
+// 日期时间选择相关
+const now = new Date();
+const ymd = ref([
+  String(now.getFullYear()),
+  String(now.getMonth() + 1).padStart(2, '0'),
+  String(now.getDate()).padStart(2, '0')
+]);
+const currentDateTime = ref(ymd);
+// month:0-11 day:1-31
+const minDate = new Date(new Date().getFullYear() - 3, 0, 1);
+const maxDate = new Date(new Date().getFullYear() + 1, 11, 31, 23, 59, 59);
+
+// 格式化日期时间
+const formatDateTime = (date) => {
+  return date.toLocaleString('zh-CN', { 
+    year: 'numeric', 
+    month: '2-digit', 
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).replace(/\//g, '-').slice(0,10);
+};
 
 // 当前显示的类别列表
 const currentCategories = computed(() => {
@@ -134,11 +187,15 @@ const selectCategory = (category) => {
 // 打开编辑对话框
 const openEditDialog = () => {
   // 填充当前记录数据
+  const recordDate = props.record.date ? new Date(props.record.date) : new Date();
+  currentDateTime.value = [String(recordDate.getFullYear()), String(recordDate.getMonth() + 1).padStart(2, '0'), String(recordDate.getDate()).padStart(2, '0')]
+  
   editForm.value = {
     amount: String(props.record.amount || ''),
     type: props.record.type || 'expense',
     category: props.record.category || '其他',
-    note: props.record.note || ''
+    note: props.record.note || '',
+    date: formatDateTime(recordDate)
   };
   showEditDialog.value = true;
 };
@@ -153,6 +210,14 @@ const onTypeChange = () => {
   }
 };
 
+// 处理日期时间选择确认
+const handleDateTimeConfirm = (arg) => {
+  const sel = Array.isArray(arg) ? arg : arg?.selectedValues;
+  const [y, m, d] = sel || currentDateTime;
+  editForm.value.date = formatDateTime(new Date(y,m-1,d));
+  showDatePicker.value = false;
+};
+
 // 处理更新
 const handleUpdate = () => {
   // 验证金额
@@ -161,12 +226,13 @@ const handleUpdate = () => {
     return;
   }
   
-  // 发送更新事件，包含类别信息
+  // 发送更新事件，包含类别信息和日期
   emit('update', props.record.id, {
     amount: Number(editForm.value.amount),
     type: editForm.value.type,
     category: editForm.value.category,
-    note: editForm.value.note
+    note: editForm.value.note,
+    date: editForm.value.date
   });
   
   showEditDialog.value = false;
@@ -224,6 +290,42 @@ const icon = computed(() => {
 /* 为不同类型的账单添加不同的背景色 */
 .van-cell {
   transition: all 0.3s ease;
+}
+
+/* 日期选择器样式 */
+.date-picker-overlay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.date-picker-container {
+  width: 100%;
+  background-color: #fff;
+  border-radius: 20px 20px 0 0;
+  max-height: 80vh;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.date-picker-header {
+  padding: 16px;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.date-picker-content {
+  
 }
 
 .category-list {
