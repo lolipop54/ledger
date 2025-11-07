@@ -213,8 +213,7 @@ const onPickDate = (arg, event) => {
         second: '2-digit',
         hour12: false
       }).replace(/\//g, '-');
-  //需要删除
-  showSuccessToast(dt);
+      
   ymd.value = [String(y), String(m).padStart(2,'0'), String(d).padStart(2,'0')];
   showDate.value = false;
   

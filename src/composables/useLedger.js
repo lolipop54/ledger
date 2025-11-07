@@ -237,7 +237,7 @@ function generateMockData() {
   const mockRecords = [
     // 今天的记录
     {
-      id: 'mock_1',
+      id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       type: 'expense',
       amount: 25.5,
       category: '餐饮',
@@ -245,7 +245,7 @@ function generateMockData() {
       date: getLocalTime()
     },
     {
-      id: 'mock_2',
+      id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       type: 'expense',
       amount: 15.0,
       category: '交通',
@@ -262,7 +262,7 @@ function generateMockData() {
     },
     // 昨天的记录
     {
-      id: 'mock_3',
+      id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       type: 'expense',
       amount: 50.0,
       category: '购物',
@@ -278,7 +278,7 @@ function generateMockData() {
     }).replace(/\//g, '-')
     },
     {
-      id: 'mock_4',
+      id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       type: 'income',
       amount: 5000.0,
       category: '工资',
@@ -295,7 +295,7 @@ function generateMockData() {
     },
     // 上个月的记录
     {
-      id: 'mock_5',
+      id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       type: 'expense',
       amount: 100.0,
       category: '娱乐',
@@ -318,14 +318,14 @@ export function useLedger() {
   let initialRecords = loadFromStorage();
   
   // 如果没有任何记录，添加默认的模拟数据
-  if (initialRecords.length === 0) {
-    initialRecords = generateMockData();
-    try {
-      saveToStorage(initialRecords);
-    } catch (e) {
-      console.error('保存模拟数据失败:', e);
-    }
-  }
+  // if (initialRecords.length === 0) {
+  //   initialRecords = generateMockData();
+  //   try {
+  //     saveToStorage(initialRecords);
+  //   } catch (e) {
+  //     console.error('保存模拟数据失败:', e);
+  //   }
+  // }
   
   const records = ref(initialRecords);
   const isLoading = ref(false);
@@ -335,7 +335,6 @@ export function useLedger() {
   const addRecord = (record) => {
   try {
     const item = {
-      //解释一下
       id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       type: record.type || 'expense', // 'expense' | 'income'
       amount: Number(record.amount) || 0,
@@ -374,8 +373,8 @@ export function useLedger() {
     const idx = records.value.findIndex(r => r.id === id);
     if (idx >= 0) {
       records.value[idx] = {
-        ...records.value[idx],
-        ...updates,
+        ...records.value[idx],// 第1步：复制原始对象的所有属性
+        ...updates,// 第2步：使用新值覆盖同名属性
         // 确保必要字段的类型正确
         amount: updates.amount ? Number(updates.amount) : records.value[idx].amount
       };
@@ -457,6 +456,7 @@ export function useLedger() {
   const summarize = (list) => {
     const expense = list.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
     const income = list.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
+    console.log(expense);
     return { expense, income, balance: income - expense };
   };
 

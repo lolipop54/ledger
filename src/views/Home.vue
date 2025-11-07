@@ -85,7 +85,15 @@ onMounted(async () => {
 
 // 注入共享的月份状态
 const sharedCurrentYM = inject('sharedCurrentYM');
-const nowYM = new Date().toISOString().slice(0,7);
+const nowYM = new Date().toLocaleString('zh-CN', { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).replace(/\//g, '-').slice(0,7);
 const currentYM = computed({
   get: () => sharedCurrentYM.value,
   set: (val) => { sharedCurrentYM.value = val; }
