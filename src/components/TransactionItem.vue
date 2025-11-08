@@ -99,7 +99,7 @@
   </van-dialog>
 
   <!-- 日期时间选择器 - 使用新的实现方式 -->
-   <van-popup v-model:show="showDatePicker" round position="bottom" round-radius="24">
+   <van-popup v-model:show="showDatePicker" position="bottom" round-radius="24">
       <van-date-picker
         title="选择日期"
         :columns-type="['year','month','day']"
@@ -108,8 +108,6 @@
         v-model="currentDateTime"
         @confirm="handleDateTimeConfirm"
         @cancel="showDatePicker = false"
-        @click.stop
-        @touchmove.stop
         :confirm-button-text="'确定'"
         :cancel-button-text="'取消'"
         :confirm-button-color="'#FFD84D'"
@@ -212,10 +210,34 @@ const onTypeChange = () => {
 
 // 处理日期时间选择确认
 const handleDateTimeConfirm = (arg) => {
-  const sel = Array.isArray(arg) ? arg : arg?.selectedValues;
-  const [y, m, d] = sel || currentDateTime;
-  editForm.value.date = formatDateTime(new Date(y,m-1,d));
-  showDatePicker.value = false;
+  try {
+    // 安全地处理参数，避免类型错误
+    let selectedValues = [];
+    
+    if (Array.isArray(arg)) {
+      selectedValues = arg;
+    } else if (arg && arg.selectedValues && Array.isArray(arg.selectedValues)) {
+      selectedValues = arg.selectedValues;
+    } else {
+      selectedValues = currentDateTime.value || [];
+    }
+    
+    if (selectedValues.length >= 3) {
+      const [y, m, d] = selectedValues;
+      // 确保日期有效
+      const date = new Date(y, parseInt(m) - 1, d);
+      if (!isNaN(date.getTime())) {
+        editForm.value.date = formatDateTime(date);
+      }
+    }
+    
+    // 同步关闭选择器
+    showDatePicker.value = false;
+  } catch (error) {
+    console.error('日期处理错误:', error);
+    // 即使出错也确保关闭选择器
+    showDatePicker.value = false;
+  }
 };
 
 // 处理更新

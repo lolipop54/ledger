@@ -1,6 +1,6 @@
 <template>
   <div class="home-page">
-    <div class="hero">
+    <div class="hero" ref="heroRef">
       <div class="ym" @click="showMonth = true">
         <span class="y">{{ currentYM.slice(0,4) }}年</span>
         <span class="m">{{ currentYM.slice(5,7) }}月</span>
@@ -16,12 +16,12 @@
           <div class="value expense">{{ format(monthSummary.expense) }}</div>
         </div>
       </div>
-      <div class="balance">
+      <!-- <div class="balance">
         <div class="label">本月结余</div>
         <div class="value" :class="{ 'positive': monthSummary.income >= monthSummary.expense, 'negative': monthSummary.income < monthSummary.expense }">
           {{ monthSummary.income >= monthSummary.expense ? '+' : '-' }}{{ format(Math.abs(monthSummary.income - monthSummary.expense)) }}
         </div>
-      </div>
+      </div> -->
     </div>
 
     <van-popup v-model:show="showMonth" round position="bottom">
@@ -35,14 +35,14 @@
         @cancel="showMonth = false"
       />
     </van-popup>
-
-    <div class="content">
+    <div class="blank" :style="{ height: contentMarginTop, background: '#f5f5f5' }"></div>
+    <div class="content" >
       <div v-if="monthGroups.length === 0" class="empty-state">
       <div class="empty-icon">📝</div>
       <div class="empty-text">本月暂无记账记录</div>
       <div class="empty-subtext">点击下方「记一笔」开始记录</div>
     </div>
-      <div v-else>
+      <div v-else> 
         <div v-for="g in monthGroups" :key="g.date" class="group">
           <div class="date">
             <span class="date-text">{{ g.date }}</span>
@@ -52,7 +52,7 @@
             </div>
           </div>
           <div class="records-container">
-            <transaction-item
+            <TransactionItem
               v-for="r in g.list"
               :key="r.id"
               :record="r"
@@ -67,20 +67,44 @@
 </template>
 
 <script setup>
-import { Dialog, showSuccessToast } from 'vant';
+import { showSuccessToast } from 'vant';
 import TransactionItem from '../components/TransactionItem.vue';
 import { useLedger, formatAmount } from '../composables/useLedger';
-import { ref, computed, inject, onMounted } from 'vue';
+import { ref, computed, inject, onMounted, onUnmounted, nextTick, watch } from 'vue';
 
 const { monthSummaryOf, groupsByDateOf, removeRecord, updateRecord, initData } = useLedger();
+
+// 创建ref引用和响应式数据
+const heroRef = ref(null);
+const contentMarginTop = ref('0px');
+
+// 获取hero高度并设置content的margin-top
+function updateContentMarginTop() {
+  nextTick(() => {
+    if (heroRef.value) {
+      const heroHeight = heroRef.value.offsetHeight;
+      contentMarginTop.value = `${heroHeight}px`;
+    }
+  });
+}
 
 // 组件挂载时初始化数据
 onMounted(async () => {
   try {
     await initData();
+    // 数据加载完成后更新margin-top
+    updateContentMarginTop();
   } catch (error) {
     console.error('初始化数据失败:', error);
   }
+  
+  // 监听窗口大小变化
+  window.addEventListener('resize', updateContentMarginTop);
+});
+
+// 组件卸载时移除事件监听器
+onUnmounted(() => {
+  window.removeEventListener('resize', updateContentMarginTop);
 });
 
 // 注入共享的月份状态
@@ -100,7 +124,10 @@ const currentYM = computed({
 });
 const monthSummary = computed(() => monthSummaryOf(currentYM.value));
 const monthGroups = computed(() => groupsByDateOf(currentYM.value));
-
+// 监听currentYM变化，因为可能会导致hero高度变化
+watch(currentYM, () => {
+  updateContentMarginTop();
+});
 const showMonth = ref(false);
 const minMonth = new Date(new Date().getFullYear() - 3, 0, 1);
 const maxMonth = new Date(new Date().getFullYear() + 1, 11, 1);
@@ -126,6 +153,8 @@ const onRemove = (id) => {
 const onUpdate = (id, updates) => {
   updateRecord(id, updates);
   showSuccessToast('已更新');
+  // 更新后可能需要调整高度
+  updateContentMarginTop();
 };
 </script>
 
@@ -134,6 +163,7 @@ const onUpdate = (id, updates) => {
   min-height: 100vh;
   background: linear-gradient(135deg, #f7f8fa 0%, #f0f2f5 100%);
 }
+/* 渐变0deg指向x轴，逆时针变化 */
 
 /* Hero区域美化 */
 .hero { 
@@ -142,23 +172,24 @@ const onUpdate = (id, updates) => {
   padding-bottom: 24px; 
   padding-left: 20px; 
   padding-right: 20px; 
-  color: #6b4e00; 
-  border-radius: 0 0 30px 30px;
+  color: #6b4e00;   /* 字体颜色*/ 
+  border-radius: 0 0 20px 20px;
   box-shadow: 0 4px 20px rgba(255, 216, 77, 0.2);
   margin-bottom: 20px;
+  position:fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
 }
 
 .ym { 
   font-size: 16px; 
-  opacity: 0.9; 
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.ym:hover {
-  opacity: 1;
+  opacity: 0.9; /** 字体透明度 90%*/
+  display: flex; 
+  align-items: center;  /* 垂直居中对齐 即水平方向成一条直线*/
+  cursor: pointer; /** 鼠标悬停时显示为手型 */
+  transition: all 0.3s ease; /** 所有属性变化0.3秒内完成 */
 }
 
 .ym .y {
@@ -178,6 +209,7 @@ const onUpdate = (id, updates) => {
 }
 
 .ym:hover .arrow-icon {
+  opacity: 1.0;
   transform: translateY(2px);
 }
 
@@ -185,15 +217,15 @@ const onUpdate = (id, updates) => {
 .totals { 
   display: flex; 
   justify-content: space-around; 
-  margin-top: 20px;
-  margin-bottom: 20px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 16px 20px;
+  padding: 10px 20px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 16px;
   min-width: 140px;
@@ -223,7 +255,7 @@ const onUpdate = (id, updates) => {
 .balance {
   background: rgba(255, 255, 255, 0.25);
   border-radius: 16px;
-  padding: 16px 20px;
+  padding: 10px 20px;
   text-align: center;
   margin-top: 10px;
 }
@@ -255,8 +287,8 @@ const onUpdate = (id, updates) => {
 
 .group { 
   margin-top: 24px;
-  animation: fadeIn 0.5s ease;
-}
+  animation: fadeIn 1s ease;
+} 
 
 @keyframes fadeIn {
   from {
@@ -309,7 +341,7 @@ const onUpdate = (id, updates) => {
   background: rgba(255, 255, 255, 0.95);
   border-radius: 0 0 12px 12px;
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: -5px 5px 10px rgba(0, 0, 0, 0.05);
 }
 
 

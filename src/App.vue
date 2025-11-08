@@ -20,7 +20,15 @@
 import { ref, provide } from 'vue';
 
 // 创建共享的月份状态
-const nowYM = new Date().toISOString().slice(0,7);
+const nowYM = new Date().toLocaleString('zh-CN', { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).replace(/\//g, '-').slice(0,7);
 const sharedCurrentYM = ref(nowYM);
 
 // 提供给子组件使用
