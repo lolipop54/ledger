@@ -34,7 +34,7 @@
     show-cancel-button
     @confirm="handleUpdate"
     :round="true"
-    confirm-button-color="#1989fa"
+    confirm-button-color="#FFD84D"
     cancel-button-color="#8c8c8c"
   >
     <div class="edit-form">
@@ -78,7 +78,7 @@
             </div>
           </div>
           <div style="display: flex; justify-content: center; margin-top: 20px;">
-            <van-button type="primary" @click="showCategoryPicker = false" size="large" :style="{borderRadius: '20px', paddingHorizontal: '30px'}">确定</van-button>
+            <van-button type="primary" @click="showCategoryPicker = false" size="large" :style="{borderRadius: '20px', paddingHorizontal: '30px', background: 'linear-gradient(135deg, #FFD84D 0%, #FFC75F 100%)', border: 'none'}">确定</van-button>
           </div>
         </div>
       </van-popup>
@@ -345,10 +345,10 @@ const icon = computed(() => {
 }
 
 .category-item.active {
-  background: linear-gradient(135deg, #1989fa 0%, #5ac8fa 100%);
-  color: white;
-  border-color: #1989fa;
-  box-shadow: 0 4px 12px rgba(25, 137, 250, 0.3);
+  background: linear-gradient(135deg, #FFD84D 0%, #FFC75F 100%);
+  color: #6b4e00;
+  border-color: #FFD84D;
+  box-shadow: 0 4px 12px rgba(255, 216, 77, 0.3);
 }
 
 .category-item:active {
