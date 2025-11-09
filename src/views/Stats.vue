@@ -31,14 +31,12 @@
       <div class="section-title">支出分类统计</div>
       <div class="chart-section">
         <div class="pie-chart-container">
-          <div class="pie-chart-wrapper" v-if="expensePieData.length > 0">
-            <div class="pie-chart-inner">
-              <div class="pie-chart" :style="getPieChartStyle(expensePieData)"></div>
-              <div class="pie-chart-center">
-                <div class="center-icon">📊</div>
-                <div class="center-label">支出</div>
-              </div>
-            </div>
+          <div v-if="expensePieData.length > 0">
+            <div 
+              ref="expenseChartRef" 
+              class="echarts-pie-chart"
+              style="width: 220px; height: 220px;"
+            ></div>
           </div>
           <div v-else class="no-data">
             <div class="empty-icon">📊</div>
@@ -57,19 +55,22 @@
             @click="toggleCategoryExpand($event, item.category)"
             :class="{ 'highlighted': highlightedCategory === item.category }"
           >
-            <div class="category-info">
-              <div class="category-color" :style="{ backgroundColor: item.color }"></div>
-              <div class="category-name">{{ item.category }}</div>
+          <div class="list-item-content">
+              <div class="category-info">
+                <div class="category-color" :style="{ backgroundColor: item.color }"></div>
+                <div class="category-name">{{ item.category }}</div>
+              </div>
+              <div class="category-amount">
+                <div class="amount">¥ {{ format(item.total) }}</div>
+                <div class="percentage">{{ item.percentage }}%</div>
+              </div>
+              <div class="expand-icon">
+                {{ expandedCategories[item.category] ? '▼' : '▶' }}
+              </div>
             </div>
-            <div class="category-amount">
-              <div class="amount">¥ {{ format(item.total) }}</div>
-              <div class="percentage">{{ item.percentage }}%</div>
-            </div>
-            <div class="expand-icon">
-              {{ expandedCategories[item.category] ? '▼' : '▶' }}
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" :style="{ width: item.percentage + '%', backgroundColor: item.color }"></div>
+            <div class="progress-bar" :class="expandedCategories[item.category] ? 'show' : ''">
+              <div class="progress-fill" :style="{ '--width': item.percentage + '%', backgroundColor: item.color }" :class="expandedCategories[item.category] ? 'show' : ''"></div>
+              <!-- <div class="progress-percentage">{{ item.percentage }}%</div> -->
             </div>
           </div>
           
@@ -99,14 +100,12 @@
       <div class="chart-section">
         <div class="section-title">收入分类统计</div>
         <div class="pie-chart-container">
-          <div class="pie-chart-wrapper" v-if="incomePieData.length > 0">
-            <div class="pie-chart-inner">
-              <div class="pie-chart" :style="getPieChartStyle(incomePieData)"></div>
-              <div class="pie-chart-center">
-                <div class="center-icon">📈</div>
-                <div class="center-label">收入</div>
-              </div>
-            </div>
+          <div v-if="incomePieData.length > 0">
+            <div 
+              ref="incomeChartRef" 
+              class="echarts-pie-chart"
+              style="width: 220px; height: 220px;"
+            ></div>
           </div>
           <div v-else class="no-data">
             <div class="empty-icon">📈</div>
@@ -125,19 +124,22 @@
             @click="toggleCategoryExpand($event, item.category)"
             :class="{ 'highlighted': highlightedCategory === item.category }"
           >
-            <div class="category-info">
-              <div class="category-color" :style="{ backgroundColor: item.color }"></div>
-              <div class="category-name">{{ item.category }}</div>
+          <div class="list-item-content">
+              <div class="category-info">
+                <div class="category-color" :style="{ backgroundColor: item.color }"></div>
+                <div class="category-name">{{ item.category }}</div>
+              </div>
+              <div class="category-amount">
+                <div class="amount">¥ {{ format(item.total) }}</div>
+                <div class="percentage">{{ item.percentage }}%</div>
+              </div>
+              <div class="expand-icon">
+                {{ expandedCategories[item.category] ? '▼' : '▶' }}
+              </div>
             </div>
-            <div class="category-amount">
-              <div class="amount">¥ {{ format(item.total) }}</div>
-              <div class="percentage">{{ item.percentage }}%</div>
-            </div>
-            <div class="expand-icon">
-              {{ expandedCategories[item.category] ? '▼' : '▶' }}
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" :style="{ width: item.percentage + '%', backgroundColor: item.color }"></div>
+            <div class="progress-bar" :class="expandedCategories[item.category] ? 'show' : ''">
+              <div class="progress-fill" :style="{ '--width': item.percentage + '%', backgroundColor: item.color }" :class="expandedCategories[item.category] ? 'show' : ''"></div>
+              <!-- <div class="progress-percentage">{{ item.percentage }}%</div> -->
             </div>
           </div>
           
@@ -163,25 +165,43 @@
       </div>
       </div>
     </div>
+    
+
   </div>
 </template>
 
 <script setup>
-import { computed, inject, ref, onMounted } from 'vue';
+import { computed, inject, ref, onMounted, nextTick, watch, onUnmounted } from 'vue';
 import { NavBar as VanNavBar, Cell as VanCell, CellGroup as VanCellGroup } from 'vant';
 import { useLedger, formatAmount } from '../composables/useLedger';
+import * as echarts from 'echarts';
 
 const { records, initData } = useLedger();
-
-// 初始化数据
-onMounted(async () => {
-  await initData();
-});
 
 // 高亮显示的分类
 const highlightedCategory = ref('');
 // 展开的分类
 const expandedCategories = ref({});
+
+// 初始化数据
+onMounted(async () => {
+  await initData();
+  // 数据加载完成后初始化图表
+  nextTick(() => {
+    if (expenseChartRef.value && expensePieData.value.length > 0) {
+      initChart(expenseChartRef, expensePieData.value, 'expense');
+    }
+    if (incomeChartRef.value && incomePieData.value.length > 0) {
+      initChart(incomeChartRef, incomePieData.value, 'income');
+    }
+  });
+});
+
+// ECharts实例引用
+const expenseChartRef = ref(null);
+const incomeChartRef = ref(null);
+let expenseChartInstance = null;
+let incomeChartInstance = null;
 
 // 高亮分类函数
 const highlightCategory = (category) => {
@@ -310,44 +330,114 @@ function generateColor(text) {
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
-// 生成饼图的conic-gradient样式
-function getPieChartStyle(data) {
-  if (!data || data.length === 0) {
-    return { background: '#f5f5f5' };
+// 初始化饼图
+function initChart(chartRef, data, type) {
+  if (!chartRef.value) return;
+  
+  // 销毁旧实例
+  if (type === 'expense' && expenseChartInstance) {
+    expenseChartInstance.dispose();
+  } else if (type === 'income' && incomeChartInstance) {
+    incomeChartInstance.dispose();
   }
   
-  // 生成conic-gradient字符串，添加过渡效果
-  let gradientString = 'conic-gradient(';
-  let cumulativePercentage = 0;
+  // 创建新实例
+  const instance = echarts.init(chartRef.value);
   
-  for (let i = 0; i < data.length; i++) {
-    const item = data[i];
-    const percentage = parseFloat(item.percentage);
-    
-    if (i === 0) {
-      gradientString += `${item.color} 0deg, `;
-    } else {
-      gradientString += `${item.color} ${cumulativePercentage}deg, `;
-    }
-    
-    cumulativePercentage += (percentage / 100) * 360;
-    gradientString += `${item.color} ${cumulativePercentage}deg`;
-    
-    if (i < data.length - 1) {
-      gradientString += ', ';
-    }
+  // 更新实例引用
+  if (type === 'expense') {
+    expenseChartInstance = instance;
+  } else {
+    incomeChartInstance = instance;
   }
   
-  gradientString += ')';
+  // 准备数据
+  const seriesData = data.map(item => ({
+    name: item.category,
+    value: item.total,
+    itemStyle: {
+      color: item.color
+    }
+  }));
   
-  return {
-    background: gradientString,
-    // 添加边框效果，增强立体感
-    border: '3px solid white',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+  // 配置项
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: function(params) {
+        return `${params.name}<br/>金额: ¥${formatAmount(params.value)}<br/>占比: ${params.percent}%`;
+      },
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      borderColor: 'transparent',
+      textStyle: {
+        color: '#fff',
+        fontSize: 12
+      },
+      padding: 10
+    },
+    series: [{
+      name: type === 'expense' ? '支出' : '收入',
+      type: 'pie',
+      radius: ['40%', '70%'],
+      avoidLabelOverlap: false,
+      itemStyle: {
+        borderRadius: 5,
+        borderColor: '#fff',
+        borderWidth: 2
+      },
+      label: {
+        show: false
+      },
+      emphasis: {
+        label: {
+          show: false
+        },
+        itemStyle: {
+          shadowBlur: 10,
+          shadowOffsetX: 0,
+          shadowColor: 'rgba(0, 0, 0, 0.5)'
+        }
+      },
+      labelLine: {
+        show: false
+      },
+      center: ['50%', '50%'],
+      data: seriesData
+    }]
   };
+  
+  // 设置配置项
+  instance.setOption(option);
+  
+  // 监听窗口大小变化
+  window.addEventListener('resize', () => {
+    instance.resize();
+  });
 }
 
+// 监听数据变化
+watch([expensePieData, incomePieData], () => {
+  nextTick(() => {
+    if (expenseChartRef.value && expensePieData.value.length > 0) {
+      initChart(expenseChartRef, expensePieData.value, 'expense');
+    }
+    if (incomeChartRef.value && incomePieData.value.length > 0) {
+      initChart(incomeChartRef, incomePieData.value, 'income');
+    }
+  });
+}, { deep: true });
+
+// 组件卸载时清理
+onUnmounted(() => {
+  if (expenseChartInstance) {
+    expenseChartInstance.dispose();
+  }
+  if (incomeChartInstance) {
+    incomeChartInstance.dispose();
+  }
+});
+
+// 格式化函数别名
 const format = (n) => formatAmount(n);
 </script>
 
@@ -515,14 +605,10 @@ const format = (n) => formatAmount(n);
   height: 100%;
 }
 
-.pie-chart {
-  position: relative;
-  width: 100%;
-  height: 100%;
+/* ECharts饼图容器样式 */
+.echarts-pie-chart {
   border-radius: 50%;
-  overflow: hidden;
-  background: #f5f5f5;
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* 饼图中心 */
@@ -590,8 +676,20 @@ const format = (n) => formatAmount(n);
 
 .list-item {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* padding: 16px 12px;
+  border-bottom: 1px solid #f5f5f5;
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  overflow: hidden; */
+}
+.list-item-content {
+  display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
   padding: 16px 12px;
   border-bottom: 1px solid #f5f5f5;
   transition: all 0.3s ease;
@@ -623,14 +721,14 @@ const format = (n) => formatAmount(n);
   padding: 5px;
   background: rgba(255, 255, 255, 0.9);
   border-radius: 0 0 12px 12px;
-  animation: slideDown 0.3s ease-out;
+  animation: slideup 0.3s ease-out;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-@keyframes slideDown {
+@keyframes slideup {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -653,11 +751,11 @@ const format = (n) => formatAmount(n);
   margin-bottom: 0;
 }
 
-.ranking-item:hover {
+/* .ranking-item:hover {
   background: rgba(255, 216, 77, 0.1);
-}
+} */
 
-.ranking-item:hover {
+.ranking-item:active {
   background: rgba(255, 216, 77, 0.1);
   transform: translateX(4px);
 }
@@ -730,6 +828,7 @@ const format = (n) => formatAmount(n);
 
 .list-item:active {
   transform: scale(0.98);
+  transform-origin: center;
 }
 
 .list-item.highlighted {
@@ -781,21 +880,45 @@ const format = (n) => formatAmount(n);
 
 /* 进度条 */
 .progress-bar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
   height: 3px;
+  width: 100%;
   background: rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+  overflow: visible;
   border-radius: 3px;
+  opacity: 0;
+  transition: all 0.8s ease-out;
 }
 
 .progress-fill {
   height: 100%;
-  transition: width 0.8s ease-out;
+  width: 0;
+  transition: all 1.2s ease-out;
   border-radius: 3px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);  
+}
+
+.progress-bar.show {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  opacity: 1;
+}
+
+.progress-fill.show {
+  width: var(--width);
+}
+
+/* .progress-percentage {
+  font-size: 10px;
+  color: #999;
+  margin-left: 8px;
+  margin-bottom: 5px;
+  font-weight: 500;
+} */
+
+.summary-card,
+.chart-section {
+  animation: fadeIn 0.6s ease-out;
 }
 
 /* 动画效果 */
@@ -808,11 +931,6 @@ const format = (n) => formatAmount(n);
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.summary-card,
-.chart-section {
-  animation: fadeIn 0.6s ease-out;
 }
 
 .list-item {
