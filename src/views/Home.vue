@@ -72,7 +72,7 @@ import TransactionItem from '../components/TransactionItem.vue';
 import { useLedger, formatAmount } from '../composables/useLedger';
 import { ref, computed, inject, onMounted, onUnmounted, nextTick, watch } from 'vue';
 
-const { monthSummaryOf, groupsByDateOf, removeRecord, updateRecord, initData } = useLedger();
+const { monthSummaryOf, groupsByDateOf, removeRecord, updateRecord, initData, useMockData } = useLedger();
 
 // 创建ref引用和响应式数据
 const heroRef = ref(null);
@@ -92,6 +92,8 @@ function updateContentMarginTop() {
 onMounted(async () => {
   try {
     await initData();
+    // 使用模拟数据
+    // useMockData();
     // 数据加载完成后更新margin-top
     updateContentMarginTop();
   } catch (error) {
@@ -239,7 +241,7 @@ const onUpdate = (id, updates) => {
 }
 
 .item .value { 
-  font-size: 24px; 
+  font-size: 18px; 
   font-weight: 700;
 }
 
@@ -287,15 +289,19 @@ const onUpdate = (id, updates) => {
 
 .group { 
   margin-top: 24px;
-  animation: fadeIn 1s ease;
+  animation: fadeIn 1.5s linear;
 } 
 
 @keyframes fadeIn {
-  from {
+  0% {
     opacity: 0;
     transform: translateY(10px);
   }
-  to {
+  25% {
+    opacity: 0.5;
+    transform: translateY(-5px);
+  }
+  100% {
     opacity: 1;
     transform: translateY(0);
   }
@@ -343,7 +349,6 @@ const onUpdate = (id, updates) => {
   overflow: hidden;
   box-shadow: -5px 5px 10px rgba(0, 0, 0, 0.05);
 }
-
 
 
 /* 空状态 */

@@ -4,15 +4,15 @@
       :title="title" 
       :label="label" 
       :value="value" 
-      :title-style="{display:'flex',alignItems:'center',gap:'8px'}"
-      :style="{borderRadius: '12px', marginBottom: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)'}"
+      class="transaction-item"
+      :title-style="{ display:'flex',alignItems:'center', gap: '5px'}"
     >
       <template #title>
-        <span class="icon">{{ icon }}</span>
+        <span :class="['icon', (record.type === 'expense' ? 'down' : 'up')]">{{ icon }}</span>
         <span class="title">{{ title }}</span>
       </template>
       <template #label>
-        <span class="label">{{ label }}</span>
+        <div class="label">{{ label }}</div>
       </template>
       <template #value>
         <span :class="['amount', (record.type === 'expense' ? 'down' : 'up')]">{{ value }}</span>
@@ -21,8 +21,8 @@
     </van-cell>
     <template #right>
         <div style="display: flex; flex-direction: row; height: 100%;">
-          <van-button type="primary" text="修改" @click="openEditDialog" style="width:48px; height: 100%; line-height: 80px; padding: 0 5px; font-size: 14px; background: linear-gradient(135deg, #1989fa 0%, #5ac8fa 100%); border-radius: 5px 5px 5px 5px;" />
-          <van-button type="danger" text="删除" @click="$emit('remove', record.id)" style="width:48px; height: 100%; line-height: 80px; padding: 0 5px; font-size: 14px; background: linear-gradient(135deg, #e84d3d 0%, #ff6b6b 100%);border-radius: 5px 5px 5px 5px;" />
+          <van-button type="primary" text="修改" @click="openEditDialog" style="width:48px; height: 100%; padding: 0 5px; font-size: 14px; background: linear-gradient(135deg, #1989fa 0%, #5ac8fa 100%); border-radius: 5px 5px 5px 5px;" />
+          <van-button type="danger" text="删除" @click="$emit('remove', record.id)" style="width:48px; height: 100%; padding: 0 5px; font-size: 14px; background: linear-gradient(135deg, #e84d3d 0%, #ff6b6b 100%);border-radius: 5px 5px 5px 5px;" />
         </div>
       </template>
   </van-swipe-cell>
@@ -54,6 +54,7 @@
         </template>
       </van-field>
       <van-field 
+        is-link  
         label="类别" 
         v-model="editForm.category"
         readonly
@@ -88,6 +89,7 @@
         clearable
       />
       <van-field 
+        is-link
         label="日期时间" 
         v-model="editForm.date"
         readonly
@@ -138,7 +140,7 @@ const editForm = ref({
 });
 
 // 类别列表定义
-const expenseCategories = ['餐饮','买菜','购物','交通','娱乐','通讯','零食','日用','蔬菜','水果','运动','服饰','美容','住房','居家','孩子','长辈','旅行','聚会','其他'];
+const expenseCategories = ['餐饮','买菜','购物','交通','娱乐','通讯','零食','日用','蔬菜','水果','运动','服饰','美容','住房','医疗','孩子','长辈','旅行','聚会','其他'];
 const incomeCategories = ['工资','兼职','理财','其他'];
 
 // 日期时间选择相关
@@ -281,7 +283,7 @@ const categoryIconMap = {
   '服饰': '👕',
   '美容': '💄',
   '住房': '🏠',
-  '居家': '🛋️',
+  '医疗': '💊',
   '孩子': '🧒',
   '长辈': '🧓',
   '旅行': '✈️',
@@ -302,52 +304,21 @@ const icon = computed(() => {
 </script>
 
 <style scoped>
-.icon { font-size: 20px; width: 24px; display: inline-block; text-align: center; }
-.amount { font-weight: 700; width: 160px; font-size: 16px; }
-.up { color: #2aa515; }
-.down { color: #e84d3d; }
-.label { width: 128px; text-align: left; word-wrap: break-word; color: #8c8c8c; font-size: 14px; overflow: hidden; text-overflow: ellipsis;}
-.title { width: 64px; font-weight: 500; color: #333; }
+.icon { font-size: 20px; width: 32px; display: inline-block; text-align: center; }
+.amount { font-weight: 700; width: 160px; font-size: 14px; }
+.amount.up { color: #2aa515; }
+.amount.down { color: #e84d3d; }
+.label { width: 30vw; text-align: left; color: #8c8c8c; font-size: 12px; overflow: hidden; line-height: 1.1; word-break: break-word;}
+.title { width: 64px; font-weight: 500; color: #333; font-size: 14px;}
 
-/* 为不同类型的账单添加不同的背景色 */
-.van-cell {
-  transition: all 0.3s ease;
-}
 
-/* 日期选择器样式 */
-.date-picker-overlay {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 9999;
+.transaction-item{
   display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
   align-items: center;
-}
-
-.date-picker-container {
-  width: 100%;
-  background-color: #fff;
-  border-radius: 20px 20px 0 0;
-  max-height: 80vh;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
-}
-
-.date-picker-header {
-  padding: 16px;
-  text-align: center;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.date-picker-content {
-  
+  justify-content: space-between;
+  border-radius: 0 0 12px 12px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06)
 }
 
 .category-list {
@@ -387,28 +358,19 @@ const icon = computed(() => {
 
 /* 为不同类别的图标添加不同的背景色 */
 .icon {
-  padding: 6px;
+  padding: 1px;
   border-radius: 10px;
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
 }
 
 /* 支出类别的图标背景色 */
-.icon:has(+ .title) {
+.icon.down {
   background: linear-gradient(135deg, #fff1f2 0%, #fee2e2 100%);
 }
 
 /* 收入类别的图标背景色 */
-.up + .icon {
+.icon.up {
   background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-}
-
-/* 按钮样式优化 */
-.van-button {
-  transition: all 0.3s;
-}
-
-.van-button:active {
-  transform: scale(0.95);
 }
 </style>
 

@@ -4,8 +4,7 @@
       class="summary-nav" 
       title="统计"
       fixed
-      :background="'linear-gradient(135deg, #FFD84D 0%, #FFC75F 100%)'"
-      :text-color="'#6b4e00'"
+      text-color="#6b4e00"
       :title-style="{ fontWeight: '600', fontSize: '18px' }"
     />
     <div class="content">
@@ -363,7 +362,9 @@ const format = (n) => formatAmount(n);
 
 
 .summary-nav {
+  background-color: linear-gradient(135deg, #FFD84D 0%, #FFC75F 100%);
   padding-top: 30px;
+  border-radius: 0 0 20px 20px;
   box-shadow: 0 2px 10px rgba(255, 216, 77, 0.2);
 }
 
@@ -619,10 +620,7 @@ const format = (n) => formatAmount(n);
 
 /* 分类排行榜样式 */
 .category-ranking {
-  width: calc(100% + 24px);
-  margin-left: -12px;
-  margin-top: -8px;
-  padding: 12px;
+  padding: 5px;
   background: rgba(255, 255, 255, 0.9);
   border-radius: 0 0 12px 12px;
   animation: slideDown 0.3s ease-out;
@@ -729,10 +727,6 @@ const format = (n) => formatAmount(n);
   margin-top: 2px;
 }
 
-.list-item:hover {
-  background: rgba(255, 216, 77, 0.1);
-  transform: translateX(4px);
-}
 
 .list-item:active {
   transform: scale(0.98);

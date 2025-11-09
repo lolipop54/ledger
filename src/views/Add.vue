@@ -117,7 +117,7 @@ const expenseCategories = [
   { text: '服饰', value: '服饰', icon: '👕' ,type:'expense'},
   { text: '美容', value: '美容', icon: '💄' ,type:'expense'},
   { text: '住房', value: '住房', icon: '🏠' ,type:'expense'},
-  { text: '居家', value: '居家', icon: '🛋️' ,type:'expense'},
+  { text: '医疗', value: '医疗', icon: '💊' ,type:'expense'},
   { text: '孩子', value: '孩子', icon: '🧒' ,type:'expense'},
   { text: '长辈', value: '长辈', icon: '🧓' ,type:'expense'},
   { text: '旅行', value: '旅行', icon: '✈️' ,type:'expense'},
@@ -412,17 +412,6 @@ const onSubmit = () => {
   overflow: hidden;
 }
 
-.cat-item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.3) 100%);
-  z-index: 0;
-}
-
 .cat-item.active {
   background: linear-gradient(135deg, #FFD84D 0%, #FFC75F 100%);
   color: #6b4e00;
@@ -684,6 +673,10 @@ const onSubmit = () => {
 
 .category::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.2);
+}
+
+:deep(.van-grid-item__content.van-grid-item__content--center){
+  padding: 2px
 }
 </style>
 

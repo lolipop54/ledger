@@ -317,16 +317,20 @@ function generateMockData() {
 export function useLedger() {
   let initialRecords = loadFromStorage();
   
-  // 如果没有任何记录，添加默认的模拟数据
-  // if (initialRecords.length === 0) {
-  //   initialRecords = generateMockData();
-  //   try {
-  //     saveToStorage(initialRecords);
-  //   } catch (e) {
-  //     console.error('保存模拟数据失败:', e);
-  //   }
-  // }
-  
+  const useMockData = ()=>{
+    console.log("使用模拟记录")
+    // console.log(records)
+    // 如果没有任何记录，添加默认的模拟数据
+  if ( !records || records.value.length === 0 ) {
+    records.value = generateMockData();
+    try {
+      saveToStorage(records.value);
+    } catch (e) {
+      console.error('保存模拟数据失败:', e);
+    }
+  }
+  }
+
   const records = ref(initialRecords);
   const isLoading = ref(false);
 
@@ -509,7 +513,8 @@ export function useLedger() {
     groupsByDateOf,
     reloadData,
     initData,
-    getLocalTime
+    getLocalTime,
+    useMockData
   };
 }
 
