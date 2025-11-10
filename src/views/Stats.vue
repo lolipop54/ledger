@@ -35,7 +35,6 @@
             <div 
               ref="expenseChartRef" 
               class="echarts-pie-chart"
-              style="width: 220px; height: 220px;"
             ></div>
           </div>
           <div v-else class="no-data">
@@ -53,7 +52,7 @@
         >
           <div class="list-item"
             @click="toggleCategoryExpand($event, item.category)"
-            :class="{ 'highlighted': highlightedCategory === item.category }"
+            :class="{ 'highlighted': highlightedCategory.includes(item.category) }"
           >
           <div class="list-item-content">
               <div class="category-info">
@@ -104,7 +103,6 @@
             <div 
               ref="incomeChartRef" 
               class="echarts-pie-chart"
-              style="width: 220px; height: 220px;"
             ></div>
           </div>
           <div v-else class="no-data">
@@ -122,7 +120,7 @@
         >
           <div class="list-item"
             @click="toggleCategoryExpand($event, item.category)"
-            :class="{ 'highlighted': highlightedCategory === item.category }"
+            :class="{ 'highlighted': highlightedCategory.includes(item.category) }"
           >
           <div class="list-item-content">
               <div class="category-info">
@@ -179,7 +177,7 @@ import * as echarts from 'echarts';
 const { records, initData } = useLedger();
 
 // 高亮显示的分类
-const highlightedCategory = ref('');
+const highlightedCategory = ref([]);
 // 展开的分类
 const expandedCategories = ref({});
 
@@ -205,7 +203,11 @@ let incomeChartInstance = null;
 
 // 高亮分类函数
 const highlightCategory = (category) => {
-  highlightedCategory.value = highlightedCategory.value === category ? '' : category;
+  if(highlightedCategory.value.includes(category)){
+    highlightedCategory.value.splice(highlightedCategory.value.indexOf(category), 1);
+  }else{
+    highlightedCategory.value.push(category);
+  }
 };
 
 // 切换分类展开状态
@@ -359,11 +361,14 @@ function initChart(chartRef, data, type) {
       color: item.color
     }
   }));
+  // 计算总金额
+  const total = seriesData.reduce((sum, item) => sum + item.value, 0);
   
   // 配置项
   const option = {
     tooltip: {
       trigger: 'item',
+      position:'inside',
       formatter: function(params) {
         return `${params.name}<br/>金额: ¥${formatAmount(params.value)}<br/>占比: ${params.percent}%`;
       },
@@ -373,12 +378,29 @@ function initChart(chartRef, data, type) {
         color: '#fff',
         fontSize: 12
       },
-      padding: 10
+      padding: 10,
+      hideDelay: 0 // 可选：立即隐藏
     },
+    // 添加中心固定文字
+    graphic: [
+      {
+        type: 'text',
+        left: 'center',
+        top: 'center',
+        style: {
+          text: type === 'expense' ? `总支出\n¥${formatAmount(total)}` : `总收入\n¥${formatAmount(total)}`,
+          fontSize: 12,
+          fontWeight: 'bold',
+          textAlign: 'center',
+          color: '#333'
+        },
+        z: 100
+      },
+    ],
     series: [{
       name: type === 'expense' ? '支出' : '收入',
       type: 'pie',
-      radius: ['40%', '70%'],
+      radius: ['30%', '70%'],
       avoidLabelOverlap: false,
       itemStyle: {
         borderRadius: 5,
@@ -386,20 +408,18 @@ function initChart(chartRef, data, type) {
         borderWidth: 2
       },
       label: {
-        show: false
+          show: false,
       },
       emphasis: {
         label: {
-          show: false
+          
+          show: false,
         },
         itemStyle: {
           shadowBlur: 10,
           shadowOffsetX: 0,
           shadowColor: 'rgba(0, 0, 0, 0.5)'
         }
-      },
-      labelLine: {
-        show: false
       },
       center: ['50%', '50%'],
       data: seriesData
@@ -449,17 +469,16 @@ const format = (n) => formatAmount(n);
   background: linear-gradient(135deg, #f7f8fa 0%, #f0f2f5 100%);
 }
 
-
-
 .summary-nav {
   background-color: linear-gradient(135deg, #FFD84D 0%, #FFC75F 100%);
-  padding-top: 30px;
+  padding-top: 40px;
+  padding-bottom: 16px;
   border-radius: 0 0 20px 20px;
   box-shadow: 0 2px 10px rgba(255, 216, 77, 0.2);
 }
 
 .content {
-  padding-top: 80px;
+  padding-top: 110px;
   padding-bottom: 120px;
   padding-left: 16px;
   padding-right: 16px;
@@ -593,20 +612,10 @@ const format = (n) => formatAmount(n);
   min-height: 240px;
 }
 
-.pie-chart-wrapper {
-  position: relative;
-  width: 220px;
-  height: 220px;
-}
-
-.pie-chart-inner {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
 /* ECharts饼图容器样式 */
 .echarts-pie-chart {
+  width: 256px;
+  height: 256px;
   border-radius: 50%;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
@@ -678,10 +687,10 @@ const format = (n) => formatAmount(n);
   display: flex;
   flex-direction: column;
   align-items: center;
+  border-radius: 12px;
   /* padding: 16px 12px;
   border-bottom: 1px solid #f5f5f5;
   transition: all 0.3s ease;
-  border-radius: 12px;
   background: rgba(255, 255, 255, 0.5);
   overflow: hidden; */
 }
@@ -703,7 +712,6 @@ const format = (n) => formatAmount(n);
   font-size: 14px;
   color: #999;
   margin-left: 8px;
-  padding: 4px 8px;
   cursor: pointer;
   border-radius: 4px;
   transition: all 0.2s ease;
@@ -711,7 +719,7 @@ const format = (n) => formatAmount(n);
   text-align: center;
 }
 
-.expand-icon:hover {
+.expand-icon:active {
   background: rgba(0, 0, 0, 0.05);
   color: #666;
 }
@@ -884,7 +892,7 @@ const format = (n) => formatAmount(n);
   width: 100%;
   background: rgba(0, 0, 0, 0.05);
   overflow: visible;
-  border-radius: 3px;
+  border-radius: 12px;
   opacity: 0;
   transition: all 0.8s ease-out;
 }
@@ -893,7 +901,7 @@ const format = (n) => formatAmount(n);
   height: 100%;
   width: 0;
   transition: all 1.2s ease-out;
-  border-radius: 3px;
+  border-radius: 12px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);  
 }
 

@@ -177,7 +177,7 @@ onUnmounted(() => {
 
 const pickCategory = (c) => {
   form.value.category = c.value;
-  console.log('点击分类:', c.value);
+  // console.log('点击分类:', c.value);
   if (tabIndex.value === 1) form.value.type = 'income'; else form.value.type = 'expense';
   // 点击分类时显示键盘和金额备注栏
   showKeyboard.value = true;

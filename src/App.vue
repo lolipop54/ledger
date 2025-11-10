@@ -36,6 +36,13 @@ provide('sharedCurrentYM', sharedCurrentYM);
 </script>
 
 <style>
+:root {
+        --safe-area-inset-top: env(safe-area-inset-top);
+        --safe-area-inset-bottom: env(safe-area-inset-bottom);
+        --safe-area-inset-left: env(safe-area-inset-left);
+        --safe-area-inset-right: env(safe-area-inset-right);
+    }
+
 /* 全局样式重置 */
 * {
   box-sizing: border-box;
@@ -68,7 +75,7 @@ provide('sharedCurrentYM', sharedCurrentYM);
   left: 0;
   right: 0;
   padding-top: 10px;
-  padding-bottom: 45px !important;
+  padding-bottom: 45px;
   width: 100%;
   border: none !important;
   outline: none !important;

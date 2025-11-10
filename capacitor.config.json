@@ -4,6 +4,9 @@
   "version": "1.3.0",
   "webDir": "dist",
   "bundledWebRuntime": false,
+  "android": {
+    "adjustMarginsForEdgeToEdge": "disabled"
+  },
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 0

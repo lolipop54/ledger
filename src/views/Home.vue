@@ -67,7 +67,7 @@
 </template>
 
 <script setup>
-import { showSuccessToast } from 'vant';
+import { showSuccessToast, showConfirmDialog  } from 'vant';
 import TransactionItem from '../components/TransactionItem.vue';
 import { useLedger, formatAmount } from '../composables/useLedger';
 import { ref, computed, inject, onMounted, onUnmounted, nextTick, watch } from 'vue';
@@ -145,11 +145,24 @@ const onPickMonth = (val) => {
 const format = (n) => formatAmount(n);
 
 const onRemove = (id) => {
-  // 使用原生confirm对话框，兼容性更好
-  if (window.confirm('确定删除该记录吗？')) {
+  // 使用Vant的Dialog组件，设置黄色圆润风格
+  showConfirmDialog({
+    title: '确认删除',
+    message: '确定删除该记录吗？',
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    confirmButtonColor: '#FFD84D',
+    cancelButtonColor: '#666',
+    overlayStyle: {
+      backgroundColor: 'rgba(0, 0, 0, 0.5)'
+    },
+    className: 'yellow-round-dialog'
+  }).then(() => {
     removeRecord(id);
     showSuccessToast('已删除');
-  }
+  }).catch(() => {
+    // 取消删除操作
+  });
 };
 
 const onUpdate = (id, updates) => {
@@ -170,7 +183,7 @@ const onUpdate = (id, updates) => {
 /* Hero区域美化 */
 .hero { 
   background: linear-gradient(135deg, #FFD84D 0%, #FFC75F 100%); 
-  padding-top: 48px; 
+  padding-top: 40px; 
   padding-bottom: 24px; 
   padding-left: 20px; 
   padding-right: 20px; 
@@ -391,6 +404,52 @@ const onUpdate = (id, updates) => {
 :deep(.van-picker__confirm) {
   color: #FFD84D;
   font-weight: 600;
+}
+
+/* 黄色圆润风格的删除确认框样式 */
+:deep(.yellow-round-dialog) {
+  border-radius: 20px !important;
+  overflow: hidden;
+}
+
+:deep(.yellow-round-dialog .van-dialog__header) {
+  padding: 24px 24px 16px;
+}
+
+:deep(.yellow-round-dialog .van-dialog__title) {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+:deep(.yellow-round-dialog .van-dialog__content) {
+  padding: 0 24px 24px;
+  font-size: 15px;
+  color: #666;
+  line-height: 1.5;
+}
+
+:deep(.yellow-round-dialog .van-dialog__footer) {
+  border-top: 1px solid #f0f0f0;
+  padding: 12px 24px;
+  background: #fff;
+}
+
+:deep(.yellow-round-dialog .van-button) {
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 16px;
+  padding: 8px 24px;
+}
+
+:deep(.yellow-round-dialog .van-dialog__confirm-button) {
+  background: linear-gradient(135deg, #FFD84D 0%, #FFC75F 100%) !important;
+  color: #6b4e00 !important;
+  box-shadow: 0 2px 8px rgba(255, 216, 77, 0.3);
+}
+
+:deep(.yellow-round-dialog .van-dialog__cancel-button) {
+  color: #666 !important;
 }
 </style>
 
