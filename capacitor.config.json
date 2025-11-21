@@ -1,6 +1,6 @@
 {
   "appId": "com.example.ledger",
-  "appName": "罐头记账",
+  "appName": "Ledger",
   "version": "1.3.0",
   "webDir": "dist",
   "bundledWebRuntime": false,
