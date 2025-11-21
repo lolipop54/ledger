@@ -1,143 +1,147 @@
 <template>
-  <van-swipe-cell class="swipe-wrapper">
-    <div class="transaction-card">
-      <van-cell 
-        :title="title" 
-        :label="label" 
-        :value="value" 
-        class="transaction-content"
-        :border="false"
-      >
-        <template #title>
-          <div class="title-row">
-            <div :class="['icon-box', (record.type === 'expense' ? 'icon-expense' : 'icon-income')]">
-              {{ icon }}
+  <!-- 【关键修复】添加一个根 div 包裹所有内容 -->
+  <div class="transaction-item-root">
+    
+    <van-swipe-cell class="swipe-wrapper">
+      <div class="transaction-card">
+        <van-cell 
+          :title="title" 
+          :label="label" 
+          :value="value" 
+          class="transaction-content"
+          :border="false"
+        >
+          <template #title>
+            <div class="title-row">
+              <div :class="['icon-box', (record.type === 'expense' ? 'icon-expense' : 'icon-income')]">
+                {{ icon }}
+              </div>
+              <span class="title-text">{{ title }}</span>
             </div>
-            <span class="title-text">{{ title }}</span>
+          </template>
+          <template #label>
+            <div class="label-text">{{ label }}</div>
+          </template>
+          <template #value>
+            <span :class="['amount-text', (record.type === 'expense' ? 'text-expense' : 'text-income')]">
+              {{ value }}
+            </span>
+          </template>
+        </van-cell>
+      </div>
+
+      <template #right>
+        <div class="action-buttons">
+          <div class="action-btn btn-edit" @click="openEditDialog">
+            <van-icon name="edit" />
           </div>
-        </template>
-        <template #label>
-          <div class="label-text">{{ label }}</div>
-        </template>
-        <template #value>
-          <span :class="['amount-text', (record.type === 'expense' ? 'text-expense' : 'text-income')]">
-            {{ value }}
-          </span>
-        </template>
-      </van-cell>
-    </div>
-
-    <template #right>
-      <div class="action-buttons">
-        <div class="action-btn btn-edit" @click="openEditDialog">
-          <van-icon name="edit" />
+          <div class="action-btn btn-delete" @click="$emit('remove', record.id)">
+            <van-icon name="delete" />
+          </div>
         </div>
-        <div class="action-btn btn-delete" @click="$emit('remove', record.id)">
-          <van-icon name="delete" />
+      </template>
+    </van-swipe-cell>
+
+    <!-- 修改对话框 -->
+    <van-dialog
+      v-model:show="showEditDialog"
+      title="修改记录"
+      show-cancel-button
+      @confirm="handleUpdate"
+      className="clash-dialog" 
+      confirm-button-color="#FF7675"
+      cancel-button-color="#666"
+    >
+      <div class="edit-form">
+        <van-field
+          label="金额"
+          v-model="editForm.amount"
+          type="number"
+          placeholder="0.00"
+          class="clash-field"
+        />
+        
+        <div class="type-toggle">
+          <div 
+            class="type-option" 
+            :class="{ active: editForm.type === 'expense' }"
+            @click="editForm.type = 'expense'; onTypeChange()"
+          >支出</div>
+          <div 
+            class="type-option" 
+            :class="{ active: editForm.type === 'income' }"
+            @click="editForm.type = 'income'; onTypeChange()"
+          >收入</div>
+        </div>
+
+        <van-field 
+          readonly
+          label="类别" 
+          v-model="editForm.category"
+          @click="showCategoryPicker = true"
+          class="clash-field clickable"
+          right-icon="arrow"
+        />
+        
+        <van-field
+          label="备注"
+          v-model="editForm.note"
+          placeholder="写点什么..."
+          class="clash-field"
+        />
+        
+        <van-field 
+          readonly
+          label="时间" 
+          v-model="editForm.date"
+          @click="showDatePicker = true"
+          class="clash-field clickable"
+          right-icon="calendar-o"
+        />
+      </div>
+    </van-dialog>
+
+    <!-- 类别选择器 -->
+    <van-popup 
+      v-model:show="showCategoryPicker" 
+      position="bottom" 
+      class="clash-popup"
+    >
+      <div class="popup-header">选择类别</div>
+      <div class="category-grid">
+        <div 
+          v-for="(category, index) in currentCategories" 
+          :key="index"
+          class="category-chip"
+          :class="{ active: editForm.category === category }"
+          @click="selectCategory(category)"
+        >
+          {{ category }}
         </div>
       </div>
-    </template>
-  </van-swipe-cell>
-
-  <!-- 修改对话框 -->
-  <van-dialog
-    v-model:show="showEditDialog"
-    title="修改记录"
-    show-cancel-button
-    @confirm="handleUpdate"
-    className="clash-dialog" 
-    confirm-button-color="#FF7675"
-    cancel-button-color="#666"
-  >
-    <div class="edit-form">
-      <van-field
-        label="金额"
-        v-model="editForm.amount"
-        type="number"
-        placeholder="0.00"
-        class="clash-field"
-      />
-      
-      <div class="type-toggle">
-        <div 
-          class="type-option" 
-          :class="{ active: editForm.type === 'expense' }"
-          @click="editForm.type = 'expense'; onTypeChange()"
-        >支出</div>
-        <div 
-          class="type-option" 
-          :class="{ active: editForm.type === 'income' }"
-          @click="editForm.type = 'income'; onTypeChange()"
-        >收入</div>
+      <div class="popup-footer">
+        <div class="clash-btn" @click="showCategoryPicker = false">确定</div>
       </div>
+    </van-popup>
 
-      <van-field 
-        readonly
-        label="类别" 
-        v-model="editForm.category"
-        @click="showCategoryPicker = true"
-        class="clash-field clickable"
-        right-icon="arrow"
+    <!-- 日期选择器 -->
+    <van-popup 
+      v-model:show="showDatePicker" 
+      position="bottom" 
+      class="clash-popup"
+    >
+      <van-date-picker
+        title="选择日期"
+        :columns-type="['year','month','day']"
+        :min-date="minDate"
+        :max-date="maxDate"
+        v-model="currentDateTime"
+        @confirm="handleDateTimeConfirm"
+        @cancel="showDatePicker = false"
+        class="clash-picker"
       />
-      
-      <van-field
-        label="备注"
-        v-model="editForm.note"
-        placeholder="写点什么..."
-        class="clash-field"
-      />
-      
-      <van-field 
-        readonly
-        label="时间" 
-        v-model="editForm.date"
-        @click="showDatePicker = true"
-        class="clash-field clickable"
-        right-icon="calendar-o"
-      />
-    </div>
-  </van-dialog>
-
-  <!-- 类别选择器 -->
-  <van-popup 
-    v-model:show="showCategoryPicker" 
-    position="bottom" 
-    class="clash-popup"
-  >
-    <div class="popup-header">选择类别</div>
-    <div class="category-grid">
-      <div 
-        v-for="(category, index) in currentCategories" 
-        :key="index"
-        class="category-chip"
-        :class="{ active: editForm.category === category }"
-        @click="selectCategory(category)"
-      >
-        {{ category }}
-      </div>
-    </div>
-    <div class="popup-footer">
-      <div class="clash-btn" @click="showCategoryPicker = false">确定</div>
-    </div>
-  </van-popup>
-
-  <!-- 日期选择器 -->
-  <van-popup 
-    v-model:show="showDatePicker" 
-    position="bottom" 
-    class="clash-popup"
-  >
-    <van-date-picker
-      title="选择日期"
-      :columns-type="['year','month','day']"
-      :min-date="minDate"
-      :max-date="maxDate"
-      v-model="currentDateTime"
-      @confirm="handleDateTimeConfirm"
-      @cancel="showDatePicker = false"
-      class="clash-picker"
-    />
-  </van-popup>
+    </van-popup>
+  </div>
 </template>
 
 <script setup>
@@ -150,8 +154,6 @@ const props = defineProps({
 
 const emit = defineEmits(['remove', 'update']);
 
-// ... (JS 逻辑部分完全保持不变，不需要修改，为了节省篇幅省略) ...
-// 请保留你原有的 JS 代码
 // 编辑相关变量
 const showEditDialog = ref(false);
 const showCategoryPicker = ref(false);
