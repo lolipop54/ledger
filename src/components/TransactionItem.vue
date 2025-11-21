@@ -1,120 +1,143 @@
 <template>
-  <van-swipe-cell>
-    <van-cell 
-      :title="title" 
-      :label="label" 
-      :value="value" 
-      class="transaction-item"
-      :title-style="{ display:'flex',alignItems:'center', gap: '5px'}"
-    >
-      <template #title>
-        <span :class="['icon', (record.type === 'expense' ? 'down' : 'up')]">{{ icon }}</span>
-        <span class="title">{{ title }}</span>
-      </template>
-      <template #label>
-        <div class="label">{{ label }}</div>
-      </template>
-      <template #value>
-        <span :class="['amount', (record.type === 'expense' ? 'down' : 'up')]">{{ value }}</span>
-      </template>
-  
-    </van-cell>
+  <van-swipe-cell class="swipe-wrapper">
+    <div class="transaction-card">
+      <van-cell 
+        :title="title" 
+        :label="label" 
+        :value="value" 
+        class="transaction-content"
+        :border="false"
+      >
+        <template #title>
+          <div class="title-row">
+            <div :class="['icon-box', (record.type === 'expense' ? 'icon-expense' : 'icon-income')]">
+              {{ icon }}
+            </div>
+            <span class="title-text">{{ title }}</span>
+          </div>
+        </template>
+        <template #label>
+          <div class="label-text">{{ label }}</div>
+        </template>
+        <template #value>
+          <span :class="['amount-text', (record.type === 'expense' ? 'text-expense' : 'text-income')]">
+            {{ value }}
+          </span>
+        </template>
+      </van-cell>
+    </div>
+
     <template #right>
-        <div style="display: flex; flex-direction: row; height: 100%;">
-          <van-button type="primary" text="修改" @click="openEditDialog" style="width:48px; height: 100%; padding: 0 5px; font-size: 14px; background: linear-gradient(135deg, #1989fa 0%, #5ac8fa 100%); border-radius: 5px 5px 5px 5px;" />
-          <van-button type="danger" text="删除" @click="$emit('remove', record.id)" style="width:48px; height: 100%; padding: 0 5px; font-size: 14px; background: linear-gradient(135deg, #e84d3d 0%, #ff6b6b 100%);border-radius: 5px 5px 5px 5px;" />
+      <div class="action-buttons">
+        <div class="action-btn btn-edit" @click="openEditDialog">
+          <van-icon name="edit" />
         </div>
-      </template>
+        <div class="action-btn btn-delete" @click="$emit('remove', record.id)">
+          <van-icon name="delete" />
+        </div>
+      </div>
+    </template>
   </van-swipe-cell>
 
   <!-- 修改对话框 -->
   <van-dialog
     v-model:show="showEditDialog"
-    title="修改记账"
+    title="修改记录"
     show-cancel-button
     @confirm="handleUpdate"
-    :round="true"
-    confirm-button-color="#FFD84D"
-    cancel-button-color="#8c8c8c"
+    className="clash-dialog" 
+    confirm-button-color="#FF7675"
+    cancel-button-color="#666"
   >
     <div class="edit-form">
       <van-field
         label="金额"
         v-model="editForm.amount"
         type="number"
-        placeholder="请输入金额"
-        clearable
-      />
-      <van-field label="类型">
-        <template #input>
-          <van-radio-group v-model="editForm.type" @change="onTypeChange">
-            <van-radio name="expense">支出</van-radio>
-            <van-radio name="income">收入</van-radio>
-          </van-radio-group>
-        </template>
-      </van-field>
-      <van-field 
-        is-link  
-        label="类别" 
-        v-model="editForm.category"
-        readonly
-        clickable
-        @click="showCategoryPicker = true"
+        placeholder="0.00"
+        class="clash-field"
       />
       
-      <!-- 类别选择器弹出层 -->
-      <van-popup v-model:show="showCategoryPicker" position="bottom" round :style="{borderRadius: '20px 20px 0 0'}">
-        <div style="padding: 16px;">
-          <h3 style="margin-top: 0; margin-bottom: 16px; text-align: center; color: #333; font-weight: 600; font-size: 16px;">选择类别</h3>
-          <div class="category-list">
-            <div 
-              v-for="(category, index) in currentCategories" 
-              :key="index"
-              class="category-item"
-              :class="{ active: editForm.category === category }"
-              @click="selectCategory(category)"
-            >
-              {{ category }}
-            </div>
-          </div>
-          <div style="display: flex; justify-content: center; margin-top: 20px;">
-            <van-button type="primary" @click="showCategoryPicker = false" size="large" :style="{borderRadius: '20px', paddingHorizontal: '30px', background: 'linear-gradient(135deg, #FFD84D 0%, #FFC75F 100%)', border: 'none'}">确定</van-button>
-          </div>
-        </div>
-      </van-popup>
+      <div class="type-toggle">
+        <div 
+          class="type-option" 
+          :class="{ active: editForm.type === 'expense' }"
+          @click="editForm.type = 'expense'; onTypeChange()"
+        >支出</div>
+        <div 
+          class="type-option" 
+          :class="{ active: editForm.type === 'income' }"
+          @click="editForm.type = 'income'; onTypeChange()"
+        >收入</div>
+      </div>
+
+      <van-field 
+        readonly
+        label="类别" 
+        v-model="editForm.category"
+        @click="showCategoryPicker = true"
+        class="clash-field clickable"
+        right-icon="arrow"
+      />
+      
       <van-field
         label="备注"
         v-model="editForm.note"
-        placeholder="请输入备注"
-        clearable
+        placeholder="写点什么..."
+        class="clash-field"
       />
+      
       <van-field 
-        is-link
-        label="日期时间" 
-        v-model="editForm.date"
         readonly
-        clickable
+        label="时间" 
+        v-model="editForm.date"
         @click="showDatePicker = true"
-        right-icon="calendar"
+        class="clash-field clickable"
+        right-icon="calendar-o"
       />
     </div>
   </van-dialog>
 
-  <!-- 日期时间选择器 - 使用新的实现方式 -->
-   <van-popup v-model:show="showDatePicker" position="bottom" round-radius="24">
-      <van-date-picker
-        title="选择日期"
-        :columns-type="['year','month','day']"
-        :min-date="minDate"
-        :max-date="maxDate"
-        v-model="currentDateTime"
-        @confirm="handleDateTimeConfirm"
-        @cancel="showDatePicker = false"
-        :confirm-button-text="'确定'"
-        :cancel-button-text="'取消'"
-        :confirm-button-color="'#FFD84D'"
-      />
-    </van-popup>
+  <!-- 类别选择器 -->
+  <van-popup 
+    v-model:show="showCategoryPicker" 
+    position="bottom" 
+    class="clash-popup"
+  >
+    <div class="popup-header">选择类别</div>
+    <div class="category-grid">
+      <div 
+        v-for="(category, index) in currentCategories" 
+        :key="index"
+        class="category-chip"
+        :class="{ active: editForm.category === category }"
+        @click="selectCategory(category)"
+      >
+        {{ category }}
+      </div>
+    </div>
+    <div class="popup-footer">
+      <div class="clash-btn" @click="showCategoryPicker = false">确定</div>
+    </div>
+  </van-popup>
+
+  <!-- 日期选择器 -->
+  <van-popup 
+    v-model:show="showDatePicker" 
+    position="bottom" 
+    class="clash-popup"
+  >
+    <van-date-picker
+      title="选择日期"
+      :columns-type="['year','month','day']"
+      :min-date="minDate"
+      :max-date="maxDate"
+      v-model="currentDateTime"
+      @confirm="handleDateTimeConfirm"
+      @cancel="showDatePicker = false"
+      class="clash-picker"
+    />
+  </van-popup>
 </template>
 
 <script setup>
@@ -127,6 +150,8 @@ const props = defineProps({
 
 const emit = defineEmits(['remove', 'update']);
 
+// ... (JS 逻辑部分完全保持不变，不需要修改，为了节省篇幅省略) ...
+// 请保留你原有的 JS 代码
 // 编辑相关变量
 const showEditDialog = ref(false);
 const showCategoryPicker = ref(false);
@@ -304,73 +329,222 @@ const icon = computed(() => {
 </script>
 
 <style scoped>
-.icon { font-size: 20px; width: 32px; display: inline-block; text-align: center; }
-.amount { font-weight: 700; width: 160px; font-size: 14px; }
-.amount.up { color: #2aa515; }
-.amount.down { color: #e84d3d; }
-.label { width: 30vw; text-align: left; color: #8c8c8c; font-size: 12px; overflow: hidden; line-height: 1.1; word-break: break-word;}
-.title { width: 64px; font-weight: 500; color: #333; font-size: 14px;}
+/* 引入全局颜色变量 (假设 App.vue 已定义) */
+/* --clash-black: #2D3436; --clash-orange: #FF7675; --clash-green: #00B894; */
 
-
-.transaction-item{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-radius: 0 0 12px 12px;
-  margin-bottom: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06)
+.swipe-wrapper {
+  margin-bottom: 12px;
+  /* 防止 swipe cell 阴影被切 */
+  padding-bottom: 4px; 
 }
 
-.category-list {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
+/* --- 列表卡片 --- */
+.transaction-card {
+  background: #fff;
+  /* 只有下边框，营造一种列表感 */
+  border-bottom: 2px solid var(--clash-black, #2D3436);
+  transition: transform 0.1s;
+}
+
+.transaction-card:active {
+  background: #F9F9F9;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon-box {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  border: 2px solid var(--clash-black, #2D3436);
+  border-radius: 8px;
+  box-shadow: 2px 2px 0 var(--clash-black, #2D3436);
+}
+
+.icon-expense {
+  background: #FFEAA7; /* 浅黄 */
+}
+.icon-income {
+  background: #55EFC4; /* 浅绿 */
+}
+
+.title-text {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--clash-black, #2D3436);
+}
+
+.label-text {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+  /* 限制行数 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
+}
+
+.amount-text {
+  font-family: 'Outfit', sans-serif; /* 推荐使用英文字体 */
+  font-weight: 900;
+  font-size: 16px;
+}
+
+.text-expense { color: var(--clash-orange, #FF7675); }
+.text-income { color: var(--clash-green, #00B894); }
+
+/* --- 右滑按钮 --- */
+.action-buttons {
+  display: flex;
+  height: 100%;
+}
+
+.action-btn {
+  width: 60px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #fff;
+  border-top: 2px solid var(--clash-black, #2D3436);
+  border-bottom: 2px solid var(--clash-black, #2D3436);
+  /* border-left: 2px solid var(--clash-black, #2D3436); */
+  cursor: pointer;
+}
+
+.btn-edit {
+  background: #74B9FF;
+}
+
+.btn-delete {
+  background: var(--clash-orange, #FF7675);
+  border-right: 2px solid var(--clash-black, #2D3436); /* 只有最后一个有右边框 */
+}
+
+/* --- 弹窗样式覆盖 --- */
+/* 全局 Dialog 样式已经在 App.vue 中覆盖，这里只补充内容 */
+.edit-form {
+  padding: 10px 0;
+}
+
+/* 输入框 & 字段 */
+.clash-field {
+  border: 2px solid var(--clash-black, #2D3436);
+  margin-bottom: 12px;
+  border-radius: 8px;
+  padding: 8px 12px;
+  /* 去掉 Vant 默认底边框 */
+  &::after { display: none; }
+}
+
+.clash-field.clickable:active {
+  background: #F0F0F0;
+}
+
+/* 类型切换 Tab */
+.type-toggle {
+  display: flex;
+  border: 2px solid var(--clash-black, #2D3436);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  box-shadow: 4px 4px 0 var(--clash-black, #2D3436);
+}
+
+.type-option {
+  flex: 1;
+  text-align: center;
+  padding: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.type-option:first-child {
+  border-right: 2px solid var(--clash-black, #2D3436);
+}
+
+.type-option.active {
+  background: var(--clash-black, #2D3436);
+  color: #fff;
+}
+
+/* --- 类别选择弹窗 --- */
+.clash-popup {
+  /* Vant Popup 样式覆盖 */
+  background: #fff !important;
+  border-top: 2px solid var(--clash-black, #2D3436);
+  padding: 20px;
+}
+
+.popup-header {
+  font-size: 18px;
+  font-weight: 900;
+  text-align: center;
   margin-bottom: 20px;
 }
 
-.category-item {
-  padding: 16px 12px;
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.category-chip {
+  border: 2px solid #E0E0E0;
+  border-radius: 8px;
+  padding: 8px 4px;
   text-align: center;
-  background-color: #f7f7f7;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s;
-  font-size: 14px;
-  border: 1px solid #f0f0f0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.2s;
 }
 
-.category-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+.category-chip.active {
+  border-color: var(--clash-black, #2D3436);
+  background: var(--clash-yellow, #FDCB6E); /* 高亮黄 */
+  color: var(--clash-black, #2D3436);
+  font-weight: 700;
+  box-shadow: 2px 2px 0 var(--clash-black, #2D3436);
+  transform: translate(-2px, -2px);
 }
 
-.category-item.active {
-  background: linear-gradient(135deg, #FFD84D 0%, #FFC75F 100%);
-  color: #6b4e00;
-  border-color: #FFD84D;
-  box-shadow: 0 4px 12px rgba(255, 216, 77, 0.3);
+.clash-btn {
+  background: var(--clash-black, #2D3436);
+  color: #fff;
+  text-align: center;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
 }
 
-.category-item:active {
-  opacity: 0.9;
-  transform: scale(0.98);
+.clash-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.2);
 }
 
-/* 为不同类别的图标添加不同的背景色 */
-.icon {
-  padding: 1px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-}
-
-/* 支出类别的图标背景色 */
-.icon.down {
-  background: linear-gradient(135deg, #fff1f2 0%, #fee2e2 100%);
-}
-
-/* 收入类别的图标背景色 */
-.icon.up {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+/* --- 日期选择器 --- */
+:deep(.clash-picker) {
+  /* 强制覆盖 picker 样式 */
+  .van-picker__toolbar {
+    border-bottom: 2px solid var(--clash-black, #2D3436);
+  }
+  .van-picker__confirm {
+    color: var(--clash-purple, #6C5CE7);
+    font-weight: 900;
+  }
 }
 </style>
-

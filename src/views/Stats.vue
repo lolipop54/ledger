@@ -1,170 +1,172 @@
 <template>
   <div class="stats-page">
-    <van-nav-bar 
-      class="summary-nav" 
-      title="统计"
-      fixed
-      text-color="#6b4e00"
-      :title-style="{ fontWeight: '600', fontSize: '18px' }"
-    />
-    <div class="content">
+    <!-- 导航栏 -->
+    <div class="clash-nav">
+      <div class="nav-title">统计看板</div>
+    </div>
 
+    <div class="content">
+      <!-- 汇总卡片 -->
       <div class="summary-cards">
         <div class="summary-card income-card">
-          <div class="card-icon">📈</div>
-          <div class="card-title">本月收入</div>
-          <div class="card-value income">¥ {{ format(monthTotal.income) }}</div>
+          <div class="card-inner">
+            <div class="card-icon-box">📈</div>
+            <div class="card-info">
+              <div class="card-label">本月收入</div>
+              <div class="card-value">¥ {{ format(monthTotal.income) }}</div>
+            </div>
+          </div>
         </div>
+        
         <div class="summary-card expense-card">
-          <div class="card-icon">📉</div>
-          <div class="card-title">本月支出</div>
-          <div class="card-value expense">¥ {{ format(monthTotal.expense) }}</div>
+          <div class="card-inner">
+            <div class="card-icon-box">📉</div>
+            <div class="card-info">
+              <div class="card-label">本月支出</div>
+              <div class="card-value">¥ {{ format(monthTotal.expense) }}</div>
+            </div>
+          </div>
         </div>
+
         <div class="summary-card balance-card">
-          <div class="card-icon">💰</div>
-          <div class="card-title">本月结余</div>
-          <div class="card-value" :class="{ 'positive': monthTotal.balance >= 0, 'negative': monthTotal.balance < 0 }">¥ {{ format(monthTotal.balance) }}</div>
+          <div class="card-inner">
+            <div class="card-icon-box">💰</div>
+            <div class="card-info">
+              <div class="card-label">结余</div>
+              <div class="card-value" :class="{ 'negative': monthTotal.balance < 0 }">
+                ¥ {{ format(monthTotal.balance) }}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- 支出饼图 -->
-      <div class="section-title">支出分类统计</div>
-      <div class="chart-section">
+      <!-- 支出统计 -->
+      <div class="chart-section expense-section">
+        <div class="section-header">
+          <span class="header-icon">💸</span>
+          <span class="header-title">支出构成</span>
+        </div>
+        
         <div class="pie-chart-container">
           <div v-if="expensePieData.length > 0">
-            <div 
-              ref="expenseChartRef" 
-              class="echarts-pie-chart"
-            ></div>
+            <div ref="expenseChartRef" class="echarts-pie-chart"></div>
           </div>
           <div v-else class="no-data">
-            <div class="empty-icon">📊</div>
-            <div class="empty-text">暂无支出数据</div>
+            <div class="empty-icon">🌵</div>
+            <div class="empty-text">暂无支出</div>
           </div>
         </div>
       
-      <!-- 支出明细 -->
-      <div class="detail-list" v-if="expensePieData.length > 0">
-        <div
-          v-for="item in expensePieData"
-          :key="item.category"
-          class="list-item-container"
-        >
-          <div class="list-item"
-            @click="toggleCategoryExpand($event, item.category)"
-            :class="{ 'highlighted': highlightedCategory.includes(item.category) }"
+        <!-- 支出明细列表 -->
+        <div class="detail-list" v-if="expensePieData.length > 0">
+          <div
+            v-for="item in expensePieData"
+            :key="item.category"
+            class="list-item-wrapper"
           >
-          <div class="list-item-content">
-              <div class="category-info">
-                <div class="category-color" :style="{ backgroundColor: item.color }"></div>
-                <div class="category-name">{{ item.category }}</div>
-              </div>
-              <div class="category-amount">
-                <div class="amount">¥ {{ format(item.total) }}</div>
-                <div class="percentage">{{ item.percentage }}%</div>
-              </div>
-              <div class="expand-icon">
-                {{ expandedCategories[item.category] ? '▼' : '▶' }}
-              </div>
-            </div>
-            <div class="progress-bar" :class="expandedCategories[item.category] ? 'show' : ''">
-              <div class="progress-fill" :style="{ '--width': item.percentage + '%', backgroundColor: item.color }" :class="expandedCategories[item.category] ? 'show' : ''"></div>
-              <!-- <div class="progress-percentage">{{ item.percentage }}%</div> -->
-            </div>
-          </div>
-          
-          <!-- 分类排行榜 -->
-          <div class="category-ranking" v-if="expandedCategories[item.category]">
-            <div class="ranking-title" style="font-size: 10px;">排行榜(前10名)</div>
-            <div class="ranking-item"
-              v-for="(record, index) in getCategoryRecords('expense', item.category)"
-              :key="record.id || index"
+            <div class="list-item"
+              @click="toggleCategoryExpand($event, item.category, 'expense')"
+              :class="{ 'active': expandedCategories[`expense_${item.category}`] }"
             >
-              <div class="ranking-index">{{ index + 1 }}</div>
-              <div class="ranking-info">
-                <div class="ranking-note">{{ record.note || '无备注' }}</div>
-                <div class="ranking-date">{{ record.date.slice(0, 10) || '-' }}</div>
+              <div class="list-item-main">
+                <div class="category-color-dot" :style="{ backgroundColor: item.color }"></div>
+                <div class="category-name">{{ item.category }}</div>
+                <div class="category-right">
+                  <div class="amount">¥ {{ format(item.total) }}</div>
+                  <div class="percentage">{{ item.percentage }}%</div>
+                </div>
+                <div class="expand-arrow">
+                  {{ expandedCategories[`expense_${item.category}`] ? '▼' : '▶' }}
+                </div>
               </div>
-              <div class="ranking-amount">
-                <div class="amount">¥ {{ format(record.amount) }}</div>
-                <div class="percentage">{{ record.percentage }}%</div>
+              
+              <!-- 进度条作为背景装饰 -->
+              <div class="progress-bg" :style="{ width: item.percentage + '%', backgroundColor: item.color }"></div>
+            </div>
+            
+            <!-- 排行榜 (展开内容) -->
+            <div class="ranking-panel" v-if="expandedCategories[`expense_${item.category}`]">
+              <div class="ranking-header">🏆 TOP 10</div>
+              <div class="ranking-list">
+                <div class="ranking-row"
+                  v-for="(record, index) in getCategoryRecords('expense', item.category)"
+                  :key="record.id || index"
+                >
+                  <div class="rank-badge">{{ index + 1 }}</div>
+                  <div class="rank-info">
+                    <div class="rank-note">{{ record.note || '无备注' }}</div>
+                    <div class="rank-date">{{ record.date.slice(5, 10) }}</div>
+                  </div>
+                  <div class="rank-amount">¥ {{ format(record.amount) }}</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      </div>
       
-      <!-- 收入饼图 -->
-      <div class="chart-section">
-        <div class="section-title">收入分类统计</div>
+      <!-- 收入统计 -->
+      <div class="chart-section income-section">
+        <div class="section-header">
+          <span class="header-icon">💰</span>
+          <span class="header-title">收入构成</span>
+        </div>
+
         <div class="pie-chart-container">
           <div v-if="incomePieData.length > 0">
-            <div 
-              ref="incomeChartRef" 
-              class="echarts-pie-chart"
-            ></div>
+            <div ref="incomeChartRef" class="echarts-pie-chart"></div>
           </div>
           <div v-else class="no-data">
-            <div class="empty-icon">📈</div>
-            <div class="empty-text">暂无收入数据</div>
+            <div class="empty-icon">🍃</div>
+            <div class="empty-text">暂无收入</div>
           </div>
         </div>
       
-      <!-- 收入明细 -->
-      <div class="detail-list" v-if="incomePieData.length > 0">
-        <div
-          v-for="item in incomePieData"
-          :key="item.category"
-          class="list-item-container"
-        >
-          <div class="list-item"
-            @click="toggleCategoryExpand($event, item.category)"
-            :class="{ 'highlighted': highlightedCategory.includes(item.category) }"
+        <div class="detail-list" v-if="incomePieData.length > 0">
+          <div
+            v-for="item in incomePieData"
+            :key="item.category"
+            class="list-item-wrapper"
           >
-          <div class="list-item-content">
-              <div class="category-info">
-                <div class="category-color" :style="{ backgroundColor: item.color }"></div>
-                <div class="category-name">{{ item.category }}</div>
-              </div>
-              <div class="category-amount">
-                <div class="amount">¥ {{ format(item.total) }}</div>
-                <div class="percentage">{{ item.percentage }}%</div>
-              </div>
-              <div class="expand-icon">
-                {{ expandedCategories[item.category] ? '▼' : '▶' }}
-              </div>
-            </div>
-            <div class="progress-bar" :class="expandedCategories[item.category] ? 'show' : ''">
-              <div class="progress-fill" :style="{ '--width': item.percentage + '%', backgroundColor: item.color }" :class="expandedCategories[item.category] ? 'show' : ''"></div>
-              <!-- <div class="progress-percentage">{{ item.percentage }}%</div> -->
-            </div>
-          </div>
-          
-          <!-- 分类排行榜 -->
-          <div class="category-ranking" v-if="expandedCategories[item.category]">
-            <div class="ranking-title" style="font-size: 10px;">排行榜(前10名)</div>
-            <div class="ranking-item"
-              v-for="(record, index) in getCategoryRecords('income', item.category)"
-              :key="record.id || index"
+            <div class="list-item"
+              @click="toggleCategoryExpand($event, item.category, 'income')"
+              :class="{ 'active': expandedCategories[`income_${item.category}`] }"
             >
-              <div class="ranking-index">{{ index + 1 }}</div>
-              <div class="ranking-info">
-                <div class="ranking-note">{{ record.note || '无备注' }}</div>
-                <div class="ranking-date">{{ record.date.slice(0, 10) || '-' }}</div>
+              <div class="list-item-main">
+                <div class="category-color-dot" :style="{ backgroundColor: item.color }"></div>
+                <div class="category-name">{{ item.category }}</div>
+                <div class="category-right">
+                  <div class="amount">¥ {{ format(item.total) }}</div>
+                  <div class="percentage">{{ item.percentage }}%</div>
+                </div>
+                <div class="expand-arrow">
+                  {{ expandedCategories[`income_${item.category}`] ? '▼' : '▶' }}
+                </div>
               </div>
-              <div class="ranking-amount">
-                <div class="amount">¥ {{ format(record.amount) }}</div>
-                <div class="percentage">{{ record.percentage }}%</div>
+              <div class="progress-bg" :style="{ width: item.percentage + '%', backgroundColor: item.color }"></div>
+            </div>
+            
+            <div class="ranking-panel" v-if="expandedCategories[`income_${item.category}`]">
+              <div class="ranking-header">🏆 TOP 10</div>
+              <div class="ranking-list">
+                <div class="ranking-row"
+                  v-for="(record, index) in getCategoryRecords('income', item.category)"
+                  :key="record.id || index"
+                >
+                  <div class="rank-badge">{{ index + 1 }}</div>
+                  <div class="rank-info">
+                    <div class="rank-note">{{ record.note || '无备注' }}</div>
+                    <div class="rank-date">{{ record.date.slice(5, 10) }}</div>
+                  </div>
+                  <div class="rank-amount">¥ {{ format(record.amount) }}</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      </div>
     </div>
-    
-
   </div>
 </template>
 
@@ -211,10 +213,12 @@ const highlightCategory = (category) => {
 };
 
 // 切换分类展开状态
-const toggleCategoryExpand = (event, category) => {
+// 修改：增加 type 参数，使用组合 key 防止同名冲突
+const toggleCategoryExpand = (event, category, type) => {
   // 阻止冒泡，避免触发highlightCategory
   event.stopPropagation();
-  expandedCategories.value[category] = !expandedCategories.value[category];
+  const key = `${type}_${category}`;
+  expandedCategories.value[key] = !expandedCategories.value[key];
   // 同时处理高亮状态
   highlightCategory(category);
 };
@@ -462,516 +466,269 @@ const format = (n) => formatAmount(n);
 </script>
 
 <style scoped>
-/* 全局样式 */
+/* 全局变量 (假设 App.vue 已定义) */
+/* :root { --clash-black: #2D3436; --clash-purple: #6C5CE7; --clash-yellow: #FDCB6E; --clash-bg: #F0F2F5; } */
+
 .stats-page {
-  position: relative;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f7f8fa 0%, #f0f2f5 100%);
+  background: var(--clash-bg, #F0F2F5);
+  /* 波点背景 */
+  background-image: radial-gradient(#2D3436 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
-.summary-nav {
-  background-color: linear-gradient(135deg, #FFD84D 0%, #FFC75F 100%);
-  padding-top: 40px;
-  padding-bottom: 16px;
-  border-radius: 0 0 20px 20px;
-  box-shadow: 0 2px 10px rgba(255, 216, 77, 0.2);
-}
-
-.content {
-  padding-top: 110px;
-  padding-bottom: 120px;
-  padding-left: 16px;
-  padding-right: 16px;
-}
-
-/* 汇总卡片样式 */
-.summary-cards {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  margin-bottom: 30px;
-}
-
-.summary-card {
-  background: rgba(255, 255, 255, 0.95);
-  padding: 20px;
-  border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.summary-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #FFD84D 0%, #FFC75F 100%);
-}
-
-.summary-card.income-card::before {
-  background: linear-gradient(90deg, #2aa515 0%, #36cf27 100%);
-}
-
-.summary-card.expense-card::before {
-  background: linear-gradient(90deg, #e84d3d 0%, #f56c6c 100%);
-}
-
-.summary-card.balance-card::before {
-  background: linear-gradient(90deg, #6C63FF 0%, #8E86FF 100%);
-}
-
-.summary-card:active {
-  transform: scale(0.98);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.card-icon {
-  font-size: 32px;
-  width: 60px;
+/* 导航栏 */
+.clash-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  background: #FDCB6E;
+  border-bottom: 2px solid #2D3436;
   height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f7f8fa 0%, #e8e8e8 100%);
-  border-radius: 50%;
-  flex-shrink: 0;
+  z-index: 100;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.1);
 }
 
-.card-title {
-  font-size: 14px;
+.nav-title {
+  font-size: 18px;
+  font-weight: 900;
+  color: #2D3436;
+  letter-spacing: 1px;
+}
+
+.content {
+  padding: 80px 16px 100px;
+}
+
+/* 汇总卡片 */
+.summary-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  background: #fff;
+  border: 2px solid #2D3436;
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 #2D3436;
+  overflow: hidden;
+  transition: transform 0.1s;
+}
+
+.summary-card:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 #2D3436;
+}
+
+.card-inner {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+}
+
+.card-icon-box {
+  width: 48px;
+  height: 48px;
+  background: #F0F0F0;
+  border: 2px solid #2D3436;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-right: 16px;
+}
+
+.income-card .card-icon-box { background: #55EFC4; }
+.expense-card .card-icon-box { background: #FF7675; }
+.balance-card .card-icon-box { background: #6C5CE7; color: #fff; }
+
+.card-info {
+  flex: 1;
+}
+
+.card-label {
+  font-size: 12px;
+  font-weight: 700;
   color: #666;
-  font-weight: 500;
-  margin-bottom: 4px;
+  text-transform: uppercase;
 }
 
 .card-value {
   font-size: 24px;
-  font-weight: 700;
-  flex: 1;
-}
-
-.card-value.income {
-  color: #2aa515;
-}
-
-.card-value.expense {
-  color: #e84d3d;
-}
-
-.card-value.positive {
-  color: #2aa515;
+  font-weight: 900;
+  color: #2D3436;
+  font-family: 'Outfit', sans-serif;
 }
 
 .card-value.negative {
-  color: #e84d3d;
+  color: #FF7675;
 }
 
-/* 图表区域样式 */
+/* 图表区块 */
 .chart-section {
-  background: rgba(255, 255, 255, 0.95);
+  background: #fff;
+  border: 2px solid #2D3436;
   border-radius: 16px;
-  padding: 20px;
+  box-shadow: 4px 4px 0 #2D3436;
   margin-bottom: 24px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
 }
 
-.section-title {
-  color: #666;
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 20px;
-  padding-left: 8px;
-  position: relative;
+.section-header {
+  background: #2D3436;
+  color: #fff;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.section-title::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 4px;
-  height: 20px;
-  background: linear-gradient(180deg, #FFD84D 0%, #FFC75F 100%);
-  border-radius: 4px;
-}
+.header-icon { font-size: 20px; }
+.header-title { font-weight: 900; font-size: 16px; }
 
-/* 饼图样式 */
 .pie-chart-container {
   display: flex;
   justify-content: center;
-  align-items: center;
-  margin: 20px 0;
-  min-height: 240px;
+  padding: 24px 0;
+  background: #fff;
 }
 
-/* ECharts饼图容器样式 */
 .echarts-pie-chart {
-  width: 256px;
-  height: 256px;
-  border-radius: 50%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* 饼图中心 */
-.pie-chart-center {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90px;
-  height: 90px;
-  background: white;
-  border-radius: 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.center-icon {
-  font-size: 28px;
-  margin-bottom: 4px;
-}
-
-.center-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #666;
+  width: 240px;
+  height: 240px;
 }
 
 /* 空状态 */
 .no-data {
-  color: #999;
-  font-size: 14px;
-  padding: 20px;
+  padding: 40px;
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.empty-icon {
-  font-size: 48px;
-  margin-bottom: 12px;
-  opacity: 0.5;
-}
-
-.empty-text {
-  font-size: 14px;
   color: #999;
-  font-weight: 500;
 }
+.empty-icon { font-size: 40px; margin-bottom: 8px; }
 
 /* 详情列表 */
 .detail-list {
-  margin-top: 20px;
+  border-top: 2px solid #2D3436;
 }
 
-.list-item-container {
-  margin-bottom: 8px;
-  border-radius: 12px;
-  overflow: hidden;
+.list-item-wrapper {
+  border-bottom: 2px solid #2D3436;
 }
+.list-item-wrapper:last-child { border-bottom: none; }
 
 .list-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  border-radius: 12px;
-  /* padding: 16px 12px;
-  border-bottom: 1px solid #f5f5f5;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.5);
-  overflow: hidden; */
-}
-.list-item-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  padding: 16px 12px;
-  border-bottom: 1px solid #f5f5f5;
-  transition: all 0.3s ease;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.5);
-  overflow: hidden;
-}
-
-/* 展开图标样式 */
-.expand-icon {
-  font-size: 14px;
-  color: #999;
-  margin-left: 8px;
+  position: relative;
+  padding: 16px;
   cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-  width: 20px;
-  text-align: center;
+  background: #fff;
+  transition: background 0.2s;
 }
 
-.expand-icon:active {
-  background: rgba(0, 0, 0, 0.05);
-  color: #666;
+.list-item.active {
+  background: #FFF8E1; /* 展开时微黄背景 */
 }
 
-/* 分类排行榜样式 */
-.category-ranking {
-  padding: 5px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 0 0 12px 12px;
-  animation: slideup 0.3s ease-out;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-@keyframes slideup {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* 排行榜条目样式 */
-.ranking-item {
+.list-item-main {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
-  padding: 8px 4px;
-  margin-bottom: 6px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 8px;
-  transition: all 0.2s ease;
 }
 
-.ranking-item:last-child {
-  margin-bottom: 0;
+/* 进度条背景 */
+.progress-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  opacity: 0.15;
+  z-index: 1;
+  transition: width 0.5s;
 }
 
-/* .ranking-item:hover {
-  background: rgba(255, 216, 77, 0.1);
-} */
-
-.ranking-item:active {
-  background: rgba(255, 216, 77, 0.1);
-  transform: translateX(4px);
-}
-
-/* 排名索引样式 */
-.ranking-index {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #FFD84D 0%, #FFC75F 100%);
-  color: #6b4e00;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 600;
-  margin-right: 12px;
-  flex-shrink: 0;
-  box-shadow: 0 2px 4px rgba(255, 216, 77, 0.3);
-}
-
-/* 统一所有排名使用黄色背景 */
-.ranking-item:nth-child(1) .ranking-index,
-.ranking-item:nth-child(2) .ranking-index,
-.ranking-item:nth-child(3) .ranking-index {
-  background: linear-gradient(135deg, #FFD84D 0%, #FFC75F 100%);
-  color: #6b4e00;
-}
-
-/* 排行榜信息样式 */
-.ranking-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.ranking-note {
-  font-size: 14px;
-  color: #333;
-  font-weight: 500;
-  margin-bottom: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ranking-date {
-  font-size: 12px;
-  color: #999;
-}
-
-/* 排行榜金额样式 */
-.ranking-amount {
-  text-align: right;
-  margin-left: 12px;
-  min-width: 80px;
-}
-
-.ranking-amount .amount {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-}
-
-.ranking-amount .percentage {
-  font-size: 11px;
-  color: #999;
-  margin-top: 2px;
-}
-
-
-.list-item:active {
-  transform: scale(0.98);
-  transform-origin: center;
-}
-
-.list-item.highlighted {
-  background: rgba(255, 216, 77, 0.2);
-  box-shadow: 0 2px 8px rgba(255, 216, 77, 0.3);
-}
-
-.category-info {
-  display: flex;
-  align-items: center;
-  flex: 1;
-}
-
-.category-color {
+.category-color-dot {
   width: 12px;
   height: 12px;
+  border: 2px solid #2D3436;
   border-radius: 50%;
   margin-right: 12px;
-  flex-shrink: 0;
-  border: 2px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .category-name {
-  font-size: 15px;
-  color: #333;
-  font-weight: 500;
+  font-weight: 700;
+  color: #2D3436;
+  flex: 1;
 }
 
-.category-amount {
+.category-right {
   text-align: right;
-  margin-left: 16px;
-  min-width: 120px;
-  margin-right: 8px;
+  margin-right: 12px;
 }
 
-.amount {
-  font-size: 17px;
-  font-weight: 600;
-  color: #333;
-}
+.amount { font-weight: 900; font-size: 15px; }
+.percentage { font-size: 11px; color: #666; font-weight: 600; }
 
-.percentage {
-  font-size: 12px;
-  color: #999;
-  margin-top: 2px;
-  font-weight: 500;
-}
-
-/* 进度条 */
-.progress-bar {
-  height: 3px;
-  width: 100%;
-  background: rgba(0, 0, 0, 0.05);
-  overflow: visible;
-  border-radius: 12px;
-  opacity: 0;
-  transition: all 0.8s ease-out;
-}
-
-.progress-fill {
-  height: 100%;
-  width: 0;
-  transition: all 1.2s ease-out;
-  border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);  
-}
-
-.progress-bar.show {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  opacity: 1;
-}
-
-.progress-fill.show {
-  width: var(--width);
-}
-
-/* .progress-percentage {
+.expand-arrow {
   font-size: 10px;
-  color: #999;
-  margin-left: 8px;
-  margin-bottom: 5px;
-  font-weight: 500;
-} */
-
-.summary-card,
-.chart-section {
-  animation: fadeIn 0.6s ease-out;
+  color: #2D3436;
+  width: 16px;
+  text-align: center;
 }
 
-/* 动画效果 */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* 排行榜面板 */
+.ranking-panel {
+  background: #f9f9f9;
+  border-top: 2px solid #2D3436;
+  padding: 12px 16px;
+  animation: slideDown 0.3s ease-out;
 }
 
-.list-item {
-  animation: slideIn 0.5s ease-out;
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+.ranking-header {
+  font-size: 12px;
+  font-weight: 900;
+  color: #666;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
 }
 
-/* 响应式设计 */
-@media (min-width: 414px) {
-  .summary-cards {
-    grid-template-columns: repeat(3, 1fr);
-  }
+.ranking-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #2D3436;
+  border-radius: 8px;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.05);
 }
 
-/* 导航栏样式增强 */
-:deep(.van-nav-bar) {
-  background: linear-gradient(135deg, #FFD84D 0%, #FFC75F 100%) !important;
+.rank-badge {
+  width: 20px;
+  height: 20px;
+  background: #2D3436;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  margin-right: 10px;
 }
 
-:deep(.van-nav-bar__title) {
-  color: #6b4e00 !important;
-  font-weight: 600;
-}
+.rank-info { flex: 1; overflow: hidden; }
+.rank-note { font-size: 13px; font-weight: 600; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rank-date { font-size: 10px; color: #999; }
+.rank-amount { font-weight: 700; color: #2D3436; }
+
 </style>
-
-

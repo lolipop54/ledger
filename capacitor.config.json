@@ -5,7 +5,7 @@
   "webDir": "dist",
   "bundledWebRuntime": false,
   "android": {
-    "adjustMarginsForEdgeToEdge": "disabled"
+    "adjustMarginsForEdgeToEdge": "force"
   },
   "plugins": {
     "SplashScreen": {

@@ -1,32 +1,45 @@
 <template>
   <div class="add-page">
+    <!-- 头部切换区域 -->
     <div class="header">
-      <van-tabs v-model:active="tabIndex" color="#333" title-active-color="#333" line-width="36" line-height="4">
-        <van-tab title="支出" />
-        <van-tab title="收入" />
-      </van-tabs>
+      <div class="tab-toggle">
+        <div 
+          class="tab-item" 
+          :class="{ active: tabIndex === 0 }"
+          @click="tabIndex = 0"
+        >支出</div>
+        <div 
+          class="tab-item" 
+          :class="{ active: tabIndex === 1 }"
+          @click="tabIndex = 1"
+        >收入</div>
+      </div>
     </div>
     
+    <!-- 分类网格区域 -->
     <div class="category">
-      <div class="category-tip">点击选择分类</div>
-      <van-grid :column-num="4" :gutter="12" :border="false">
-        <van-grid-item
+      <div class="category-tip">选择分类</div>
+      <div class="category-grid">
+        <div 
           v-for="c in currentCategories"
           :key="c.value"
+          class="cat-item-wrapper"
           @click="pickCategory(c)"
-          :custom-style="{ padding: '12px 8px' }"
         >
-          <div :class="['cat-item', form.category === c.value ? 'active' : '']">
+          <div :class="['cat-item', { active: form.category === c.value }]">
             <div class="icon">{{ c.icon }}</div>
             <div class="text">{{ c.text }}</div>
           </div>
-        </van-grid-item>
-      </van-grid>
+        </div>
+      </div>
     </div>
 
-    <!-- amount/note/date are integrated into keyboard panel below -->
-
-    <van-popup v-model:show="showDate" round position="bottom" round-radius="24">
+    <!-- 日期选择弹窗 (样式覆盖) -->
+    <van-popup 
+      v-model:show="showDate" 
+      position="bottom" 
+      class="clash-popup"
+    >
       <van-date-picker
         title="选择日期"
         :columns-type="['year','month','day']"
@@ -37,54 +50,98 @@
         @cancel="showDate = false"
         @click.stop
         @touchmove.stop
-        :confirm-button-text="'确定'"
-        :cancel-button-text="'取消'"
-        :confirm-button-color="'#FFD84D'"
+        class="clash-picker"
       />
     </van-popup>
 
-    <!-- kb-panel放置在数字键盘上方 -->
-    <div v-if="showKeyboard" class="kb-panel">
-      <div class="collapse-btn" @click="showKeyboard = false">
-        <VanIcon name="arrow-down" class="arrow-icon" />
-      </div>
-      <div class="amount-row">
-        <div class="amount-display">
-          <span class="currency">¥</span>
-          <span class="amount">{{ displayAmount }}</span>
+    <!-- 输入面板 (覆盖在底部) -->
+    <transition name="slide-up">
+      <div v-if="showKeyboard" class="kb-panel">
+        <!-- 顶部折叠条 -->
+        <div class="collapse-bar" @click="showKeyboard = false">
+          <div class="collapse-handle"></div>
         </div>
-        <div class="current-date">{{ dateText }}</div>
+
+        <!-- 金额显示 -->
+        <div class="amount-row">
+          <div class="amount-display">
+            <span class="currency">¥</span>
+            <span class="amount">{{ displayAmount }}</span>
+          </div>
+          <div class="current-date" @click="showDate = true">
+            {{ dateText }} <van-icon name="arrow-down" />
+          </div>
+        </div>
+
+        <!-- 备注输入 -->
+        <div class="note-box">
+          <van-field 
+            v-model="form.note" 
+            placeholder="写点备注..." 
+            class="clash-input"
+            :border="false"
+          >
+            <template #left-icon>
+              <span style="font-size: 18px; margin-right: 4px;">✏️</span>
+            </template>
+          </van-field>
+        </div>
+
+        <!-- 键盘操作区 -->
+        <div class="keyboard-grid">
+          <div class="num-pad">
+            <div class="key-row">
+              <div class="key-btn" @click="onKey('1')">1</div>
+              <div class="key-btn" @click="onKey('2')">2</div>
+              <div class="key-btn" @click="onKey('3')">3</div>
+            </div>
+            <div class="key-row">
+              <div class="key-btn" @click="onKey('4')">4</div>
+              <div class="key-btn" @click="onKey('5')">5</div>
+              <div class="key-btn" @click="onKey('6')">6</div>
+            </div>
+            <div class="key-row">
+              <div class="key-btn" @click="onKey('7')">7</div>
+              <div class="key-btn" @click="onKey('8')">8</div>
+              <div class="key-btn" @click="onKey('9')">9</div>
+            </div>
+            <div class="key-row">
+              <div class="key-btn" @click="onKey('.')">.</div>
+              <div class="key-btn" @click="onKey('0')">0</div>
+              <div class="key-btn del-btn" @click="onDel">
+                <van-icon name="delete-o" />
+              </div>
+            </div>
+          </div>
+          
+          <!-- 右侧功能键 -->
+          <div class="func-pad">
+            <div class="func-btn date-btn" @click="openToday">今天</div>
+            <div class="func-btn confirm-btn" @click="onSubmit">
+              完成
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="note"><van-field v-model="form.note" placeholder="添加备注..." :left-icon="'chat-o'" /></div>
-      <div class="tools">
-        <van-button size="small" icon="calendar-o" @click="showDate = true" class="tool-btn">修改日期</van-button>
-        <van-button size="small" @click="openToday" class="tool-btn">今天</van-button>
-        <van-button size="small" type="primary" @click="onSubmit" class="submit-btn">完成</van-button>
-      </div>
-    </div>
+    </transition>
     
-    <!-- 数字键盘 -->
-    <div v-if="showKeyboard" class="keyboard">
-      <van-number-keyboard
-        v-model:show="showKeyboard"
-        theme="default"
-        extra-key="."
-        @input="onKey"
-        @delete="onDel"
-        @close="onSubmit"
-      />
-    </div>
+    <!-- 遮罩层 (点击关闭键盘) -->
+    <div 
+      v-if="showKeyboard" 
+      class="overlay" 
+      @click="showKeyboard = false"
+    ></div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue';
+import { ref, computed, onUnmounted, watch } from 'vue'; // 引入 watch
 import { useRouter } from 'vue-router';
-import { showFailToast, showSuccessToast, Icon as VanIcon } from 'vant';
+import { showFailToast, showSuccessToast } from 'vant';
 import { useLedger } from '../composables/useLedger';
 
 const router = useRouter();
-const { addRecord, isLoading } = useLedger();
+const { addRecord } = useLedger();
 
 const form = ref({
   type: 'expense',
@@ -102,6 +159,7 @@ const form = ref({
       }).replace(/\//g, '-').slice(0,10)
 });
 
+// 数据定义保持不变
 const expenseCategories = [
   { text: '餐饮', value: '餐饮', icon: '🍽️' ,type:'expense'},
   { text: '买菜', value: '买菜', icon: '🍖' ,type:'expense'},
@@ -133,53 +191,18 @@ const incomeCategories = [
 
 const tabIndex = ref(0); // 0 支出 1 收入
 const currentCategories = computed(() => tabIndex.value === 0 ? expenseCategories : incomeCategories);
-const showKeyboard = ref(false); // 控制键盘和金额备注栏的显示/隐藏，默认隐藏
+const showKeyboard = ref(false);
 
-// 点击空白区域隐藏键盘
-const handleClickOutside = (e) => {
-  // 如果点击的元素不是分类、键盘、金额备注栏或它们的子元素
-  const target = e.target;
-  const categoryArea = document.querySelector('.category');
-  const keyboardArea = document.querySelector('.keyboard');
-  const kbPanel = document.querySelector('.kb-panel');
-  const collapseBtn = document.querySelector('.collapse-btn');
-  
-  if (categoryArea?.contains(target)) {
-    // 点击分类区域不隐藏键盘
-    return;
-  }
-  
-  if (keyboardArea?.contains(target) || kbPanel?.contains(target) || collapseBtn?.contains(target)) {
-    // 点击键盘区域或金额备注栏不隐藏
-    return;
-  }
-  
-  // 点击其他空白区域隐藏键盘
-  showKeyboard.value = false;
-};
-
-// 监听点击事件
-const addClickOutsideListener = () => {
-  document.addEventListener('click', handleClickOutside);
-};
-
-const removeClickOutsideListener = () => {
-  document.removeEventListener('click', handleClickOutside);
-};
-
-// 组件挂载时添加监听器
-addClickOutsideListener();
-
-// 组件卸载时移除监听器
-onUnmounted(() => {
-  removeClickOutsideListener();
+// 监听 tabIndex 变化来切换 type，修复切换 Tab 不更新 type 的问题
+watch(tabIndex, (newVal) => {
+  form.value.type = newVal === 0 ? 'expense' : 'income';
+  // 切换 tab 时重置分类为该类型下的第一个
+  const cats = newVal === 0 ? expenseCategories : incomeCategories;
+  form.value.category = cats[0].value;
 });
 
 const pickCategory = (c) => {
   form.value.category = c.value;
-  // console.log('点击分类:', c.value);
-  if (tabIndex.value === 1) form.value.type = 'income'; else form.value.type = 'expense';
-  // 点击分类时显示键盘和金额备注栏
   showKeyboard.value = true;
 };
 
@@ -192,491 +215,360 @@ const ymd = ref([
   String(now.getMonth() + 1).padStart(2, '0'),
   String(now.getDate()).padStart(2, '0')
 ]);
-const dateText = computed(() => form.value.date);
-const onPickDate = (arg, event) => {
-  // 阻止事件冒泡，防止触发handleClickOutside函数
-  if (event && event.stopPropagation) {
-    event.stopPropagation();
-  }
-  
+const dateText = computed(() => form.value.date.slice(5)); // 只显示月-日
+
+const onPickDate = (arg) => {
   const sel = Array.isArray(arg) ? arg : arg?.selectedValues;
   const [y, m, d] = sel || ymd.value;
-  // 组合成当天的本地时间（保留当前时分）
   const cur = new Date();
   const dt = new Date(Number(y), Number(m) - 1, Number(d || '1'), cur.getHours(), cur.getMinutes());
+  
   form.value.date = dt.toLocaleString('zh-CN', { 
-        year: 'numeric', 
-        month: '2-digit', 
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
-      }).replace(/\//g, '-').slice(0,10);
-      
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+  }).replace(/\//g, '-').slice(0,10);
+  
   ymd.value = [String(y), String(m).padStart(2,'0'), String(d).padStart(2,'0')];
   showDate.value = false;
-  
-  // 如果之前键盘是显示的，保持显示状态
-  // 不需要额外操作，因为我们只是阻止了冒泡导致的隐藏
 };
 
-// 金额输入
+// 金额输入逻辑
 const amountStr = ref('0');
-// 键盘高度相关常量已移至CSS中
-const displayAmount = computed(() => Number(amountStr.value || '0').toFixed(2));
+const displayAmount = computed(() => amountStr.value);
+
 const onKey = (key) => {
   if (key === '.') {
     if (amountStr.value.includes('.')) return;
-    amountStr.value = amountStr.value ? amountStr.value + '.' : '0.';
+    amountStr.value += '.';
     return;
   }
-  if (amountStr.value === '0') amountStr.value = '';
-  // 限制两位小数
-  const dot = amountStr.value.indexOf('.');
-  if (dot >= 0) {
-    const decimals = amountStr.value.length - (dot + 1);
-    if (decimals >= 2) return;
+  if (amountStr.value === '0') {
+    amountStr.value = key;
+  } else {
+    // 限制两位小数
+    const parts = amountStr.value.split('.');
+    if (parts.length > 1 && parts[1].length >= 2) return;
+    if (amountStr.value.length >= 9) return; // 限制最大长度
+    amountStr.value += key;
   }
-  amountStr.value += String(key);
 };
+
 const onDel = () => {
-  if (!amountStr.value) return;
-  amountStr.value = amountStr.value.slice(0, -1) || '0';
+  if (amountStr.value.length <= 1) {
+    amountStr.value = '0';
+  } else {
+    amountStr.value = amountStr.value.slice(0, -1);
+  }
 };
+
 const openToday = () => {
   const t = new Date();
   form.value.date = t.toLocaleString('zh-CN', { 
-        year: 'numeric', 
-        month: '2-digit', 
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
-      }).replace(/\//g, '-').slice(0,10);
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+  }).replace(/\//g, '-').slice(0,10);
   ymd.value = [String(t.getFullYear()), String(t.getMonth()+1).padStart(2,'0'), String(t.getDate()).padStart(2,'0')];
+  showSuccessToast('已切换到今天');
 };
 
 const onSubmit = () => {
-  form.value.amount = Number(displayAmount.value);
+  form.value.amount = Number(amountStr.value);
   if (!form.value.amount || form.value.amount <= 0) {
-    showFailToast('请输入有效金额');
+    showFailToast('请输入金额');
     return;
   }
-  if (tabIndex.value === 1) {
-    form.value.type = 'income';
-  } else {
-    form.value.type = 'expense';
-  }
+  
   try {
-    addRecord(form.value);
-    showSuccessToast('已保存');
-    // 延迟一小段时间后跳转，确保用户能看到成功提示
-    setTimeout(() => {
-      router.replace('/');
-    }, 500);
+    addRecord({ ...form.value });
+    showSuccessToast('记账成功');
+    // 重置表单
+    amountStr.value = '0';
+    form.value.note = '';
+    showKeyboard.value = false;
+    // router.replace('/'); // 可选：记账后不跳转，方便连续记账
   } catch (error) {
-    showFailToast('保存失败，请重试');
-    console.error('保存记录失败:', error);
+    showFailToast('保存失败');
   }
 };
-
-// 完成按钮直接保存，但键盘保持常显（不隐藏）
 </script>
 
 <style scoped>
-/* 页面基础布局 */
+/* 全局变量占位，确保样式生效 (假设 App.vue 已定义) */
+/* :root { --clash-black: #2D3436; --clash-purple: #6C5CE7; --clash-yellow: #FDCB6E; --clash-bg: #F0F2F5; } */
+
 .add-page {
   height: 100vh;
+  background: var(--clash-bg, #F0F2F5);
+  /* 波点背景 */
+  background-image: radial-gradient(#2D3436 1px, transparent 1px);
+  background-size: 20px 20px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  position: relative;
-  background: linear-gradient(135deg, #f7f8fa 0%, #f0f2f5 100%);
 }
 
-/* 头部样式 */
+/* --- 头部 --- */
 .header {
-  background: linear-gradient(135deg, #FFD84D 0%, #FFC75F 100%);
-  padding-top: 40px;
-  padding-bottom: 20px;
-  flex-shrink: 0;
-  height: auto;
-  border-radius: 0 0 24px 24px;
-  box-shadow: 0 4px 20px rgba(255, 216, 77, 0.2);
-  position: relative;
+  padding: 20px;
+  /* 去掉渐变背景，改用透明 */
+  background: transparent;
+  display: flex;
+  justify-content: center;
+  z-index: 10;
+}
+
+.tab-toggle {
+  display: flex;
+  background: #fff;
+  border: 2px solid #2D3436;
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 #2D3436;
   overflow: hidden;
 }
 
-
-/* 标签样式增强 */
-:deep(.van-tabs) {
-  padding: 0 20px;
-  background: transparent !important; /* 确保继承父元素的背景色 */
-}
-
-/* 确保标签栏容器背景透明 */
-:deep(.van-tabs__wrap) {
-  background: transparent !important;
-}
-
-/* 确保标签内容区域背景透明 */
-:deep(.van-tabs__content) {
-  background: transparent !important;
-}
-
-/* 确保标签项背景透明 */
-:deep(.van-tab) {
-  background: transparent !important;
-}
-
-/* 确保tab-active-bar背景透明，只显示下划线 */
-:deep(.van-tabs__line) {
-  background: #6b4e00 !important;
-}
-
-/* 确保整个vant-tabs组件内除横线外的所有元素都透明 */
-:deep(.van-tabs *) {
-  background: transparent !important;
-}
-
-/* 特别恢复选中横线的样式 */
-:deep(.van-tabs__line) {
-  background: #333 !important; /* 设置为黑色 */
-  height: 4px !important;
-  width: 36px !important;
-}
-
-/* 特别确保可能存在的外层容器也透明 */
-.header {
-  background: linear-gradient(135deg, #FFD84D 0%, #FFC75F 100%);
-  padding-top: 40px;
-  padding-bottom: 20px;
-  flex-shrink: 0;
-  height: auto;
-  border-radius: 0 0 24px 24px;
-  box-shadow: 0 4px 20px rgba(255, 216, 77, 0.2);
-  position: relative;
-  overflow: hidden;
-  z-index: 1; /* 确保header在最上层 */
-}
-
-:deep(.van-tabs__tab) {
+.tab-item {
+  padding: 10px 30px;
+  font-weight: 900;
   font-size: 16px;
-  font-weight: 600;
+  cursor: pointer;
+  color: #2D3436;
+  transition: all 0.2s;
 }
 
-:deep(.van-tabs__tab--active) {
-  color: #6b4e00 !important;
+.tab-item:first-child {
+  border-right: 2px solid #2D3436;
 }
 
-:deep(.van-tabs__line) {
-  background: #6b4e00;
-  width: 36px;
-  /* 移除固定居中的定位，让vant的默认标签行定位逻辑正常工作 */
+.tab-item.active {
+  background: #FDCB6E; /* 亮黄 */
+  color: #2D3436;
 }
 
-/* 分类区域样式 */
+/* --- 分类区 --- */
 .category {
-  padding: 20px 16px 180px;
-  background: rgba(255, 255, 255, 0.95);
-  flex-grow: 1;
+  flex: 1;
   overflow-y: auto;
-  margin: 16px;
-  border-radius: 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  padding: 0 16px 100px; /* 底部留白给键盘 */
 }
 
-/* 分类提示 */
 .category-tip {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 16px;
-  padding-left: 4px;
+  text-align: center;
+  font-weight: 700;
+  margin: 16px 0;
+  color: #2D3436;
+  opacity: 0.6;
 }
 
-/* 分类项样式 */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.cat-item-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
 .cat-item {
-  display:flex;
+  width: 72px;
+  height: 72px;
+  background: #fff;
+  border: 2px solid #2D3436;
+  border-radius: 12px;
+  display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content:center;
-  width: 100%;
-  height: 80px;
-  border-radius: 16px;
-  background: #f7f8fa;
-  color: #666;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
+  justify-content: center;
+  transition: all 0.1s;
+  box-shadow: 2px 2px 0 #2D3436; /* 默认小阴影 */
+}
+
+.cat-item:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 #2D3436;
 }
 
 .cat-item.active {
-  background: linear-gradient(135deg, #FFD84D 0%, #FFC75F 100%);
-  color: #6b4e00;
-  box-shadow: 0 4px 16px rgba(255, 216, 77, 0.3);
-  transform: translateY(-2px);
+  background: #6C5CE7; /* 高亮紫 */
+  color: #fff;
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 #2D3436; /* 选中时按下效果 */
+  border-color: #2D3436;
 }
 
-.cat-item .icon {
-  font-size: 28px;
-  z-index: 1;
-  margin-bottom: 6px;
-  filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.1));
+.cat-item.active .text {
+  color: #fff;
+  font-weight: 700;
 }
 
-.cat-item .text {
-  font-size: 13px;
-  font-weight: 500;
-  z-index: 1;
-}
+.icon { font-size: 24px; margin-bottom: 4px; }
+.text { font-size: 12px; font-weight: 600; color: #2D3436; }
 
-/* 网格样式调整 */
-.category :deep(.van-grid-item__content) {
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* 日期选择器美化 */
-:deep(.van-popup) {
-  border-radius: 24px 24px 0 0;
-  padding: 0;
-}
-
-:deep(.van-date-picker) {
-  border-radius: 24px 24px 0 0;
-}
-
-:deep(.van-picker__confirm) {
-  color: #FFD84D;
-  font-weight: 600;
-  font-size: 16px;
-}
-
-:deep(.van-picker__cancel) {
-  color: #999;
-  font-size: 16px;
-}
-
-/* kb-panel样式 - 放置在键盘上方 */
+/* --- 键盘面板 (Neo-Brutalism) --- */
 .kb-panel {
   position: fixed;
-  bottom: 325px; /* 调整为更准确的键盘高度+底部内边距，确保紧密贴合 */
-  left: 0px;
-  right: 0px;
-  display:flex;
-  flex-direction: column;
-  padding: 16px 20px 0;
-  background: #fff;
-  z-index: 99;
-  border-radius: 20px 20px 0px 0px;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
-}
-
-/* 折叠按钮样式 */
-.collapse-btn {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 8px 0;
-  margin-bottom: 8px;
-  color: #999;
-  cursor: pointer;
-}
-
-.arrow-icon {
-  transition: transform 0.3s ease;
-}
-
-.kb-panel.show {
-  transform: translateY(0);
-}
-
-/* 简化的键盘区域样式 */
-.keyboard {
-  position: fixed;
-  bottom: 40px !important;
+  bottom: 0;
   left: 0;
   right: 0;
   background: #fff;
-  z-index: 95;
-  border-top: 1px solid #f0f0f0;
-  overflow: hidden;
-  padding-bottom: 40px; /* 添加底部内边距，避免被导航栏遮挡 */
+  border-top: 2px solid #2D3436;
+  z-index: 200;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -4px 0 rgba(0,0,0,0.1);
+  margin-bottom: 64px
 }
 
-/* 针对vant数字键盘组件的深度样式修改 */
-:deep(.van-number-keyboard) {
-  position: relative;
-  bottom: 0;
-  margin-bottom: 0;
-  padding-top: 10px;
-  border-radius: 0 0 0 0;
+/* 折叠条 */
+.collapse-bar {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 2px solid #2D3436;
+  background: #f0f0f0;
+}
+.collapse-handle {
+  width: 40px;
+  height: 4px;
+  background: #2D3436;
+  border-radius: 2px;
 }
 
-/* 金额和日期行 */
+/* 金额行 */
 .amount-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  margin-bottom: 16px;
+  align-items: flex-end;
+  padding: 12px 16px;
+  border-bottom: 2px solid #2D3436;
 }
 
-/* 金额显示 */
 .amount-display {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
+  font-weight: 900;
+  color: #2D3436;
 }
+.currency { font-size: 24px; margin-right: 4px; }
+.amount { font-size: 36px; font-family: 'Outfit', sans-serif; }
 
-.currency {
-  font-size: 18px;
-  font-weight: 600;
-  color: #666;
-  opacity: 0.8;
-}
-
-.amount {
-  font-size: 36px;
-  font-weight: 700;
-  color: #333;
-}
-
-/* 日期显示 */
 .current-date {
-  font-size: 14px;
-  color: #666;
-  background: #f7f8fa;
+  background: #FDCB6E;
+  border: 2px solid #2D3436;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 2px 2px 0 #2D3436;
+}
+.current-date:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #2D3436;
+}
+
+/* 备注 */
+.note-box {
+  padding: 8px 16px;
+  border-bottom: 2px solid #2D3436;
+}
+.clash-input {
+  background: #f9f9f9;
+  border: 2px solid #2D3436 !important;
+  border-radius: 8px;
   padding: 6px 12px;
-  border-radius: 16px;
 }
 
-/* 备注输入框 */
-.kb-panel .note {
-  width: 100%;
-  margin-bottom: 16px;
+/* 键盘按键区 */
+.keyboard-grid {
+  display: flex;
+  height: 240px;
 }
 
-.kb-panel .note :deep(.van-field) {
-  margin: 0;
-  background-color: #f7f8fa;
-  border-radius: 12px;
-  transition: all 0.3s ease;
+.num-pad {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  border-right: 2px solid #2D3436;
 }
 
-.kb-panel .note :deep(.van-field__control-wrapper) {
-  border-radius: 12px;
-  border: none;
-  background: transparent;
+.key-row {
+  flex: 1;
+  display: flex;
+  border-bottom: 2px solid #2D3436;
+}
+.key-row:last-child { border-bottom: none; }
+
+.key-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  border-right: 2px solid #2D3436;
+  background: #fff;
+}
+.key-btn:last-child { border-right: none; }
+.key-btn:active { background: #e0e0e0; }
+
+.del-btn { color: #FF7675; }
+
+/* 右侧功能区 */
+.func-pad {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-.kb-panel .note :deep(.van-field__control) {
-  font-size: 15px;
-  color: #333;
+.func-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  border-bottom: 2px solid #2D3436;
+}
+.func-btn:active { opacity: 0.8; }
+
+.date-btn {
+  flex: 1;
+  background: #fff;
+  font-size: 16px;
 }
 
-.kb-panel .note :deep(.van-field__left-icon) {
-  color: #999;
+.confirm-btn {
+  flex: 2; /* 占据更多高度 */
+  background: #00B894; /* 确认色 */
+  color: #2D3436;
+  font-size: 18px;
+  border-bottom: none;
 }
 
-/* 工具栏样式 */
-.kb-panel .tools {
-  display:flex;
-  gap: 10px;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  padding-bottom: 16px;
+/* 遮罩 */
+.overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.2);
+  z-index: 150;
 }
 
-/* 按钮样式美化 */
-.tool-btn {
-  border-radius: 16px !important;
-  font-size: 14px !important;
-  background: #f7f8fa !important;
-  color: #666 !important;
-  border: none !important;
-  transition: all 0.3s ease !important;
+/* 动画 */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(100%);
 }
 
-.tool-btn:active {
-  background: #e8e8e8 !important;
-  transform: scale(0.95);
+/* 弹窗样式覆盖 (与 TransactionItem 一致) */
+:deep(.clash-popup) {
+  border-top: 2px solid #2D3436;
 }
-
-.submit-btn {
-  border-radius: 16px !important;
-  font-size: 14px !important;
-  font-weight: 600 !important;
-  background: linear-gradient(135deg, #FFD84D 0%, #FFC75F 100%) !important;
-  color: #6b4e00 !important;
-  border: none !important;
-  box-shadow: 0 2px 8px rgba(255, 216, 77, 0.3) !important;
-  transition: all 0.3s ease !important;
-}
-
-.submit-btn:active {
-  transform: scale(0.95);
-  box-shadow: 0 1px 4px rgba(255, 216, 77, 0.4) !important;
-}
-
-/* 数字键盘美化 */
-:deep(.van-number-keyboard) {
-  padding-top: 10px;
-  border-radius: 24px 24px 0 0;
-}
-
-:deep(.van-keyboard__key) {
-  border-radius: 12px !important;
-  margin: 6px !important;
-  font-size: 22px !important;
-  font-weight: 500 !important;
-  background: #f7f8fa !important;
-  transition: all 0.2s ease !important;
-}
-
-:deep(.van-keyboard__key:active) {
-  background: #e8e8e8 !important;
-  transform: scale(0.95);
-}
-
-:deep(.van-keyboard__key--large) {
-  background: #f0f0f0 !important;
-}
-
-:deep(.van-keyboard__key--large:active) {
-  background: #e0e0e0 !important;
-}
-
-:deep(.van-button--danger) {
-  background: linear-gradient(135deg, #e84d3d 0%, #f56c6c 100%) !important;
-  color: #fff !important;
-  font-weight: 500 !important;
-}
-
-/* 自定义滚动条 */
-.category::-webkit-scrollbar {
-  width: 6px;
-}
-
-.category::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.category::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 3px;
-}
-
-.category::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-:deep(.van-grid-item__content.van-grid-item__content--center){
-  padding: 2px
+:deep(.clash-picker) {
+  .van-picker__confirm { color: #6C5CE7; font-weight: 900; }
+  .van-picker__toolbar { border-bottom: 2px solid #2D3436; }
 }
 </style>
-
