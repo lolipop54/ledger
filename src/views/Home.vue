@@ -65,7 +65,7 @@
     <!-- 内容列表 -->
     <div class="content">
       <!-- 空状态 -->
-      <div v-if="monthGroups.length === 0" class="empty-state-box">
+      <div v-if="monthGroups.length === 0 && !isInit" class="empty-state-box">
         <div class="empty-illustration">
           <div class="empty-circle"></div>
           <span class="empty-emoji">🌵</span>
@@ -114,6 +114,7 @@ const { monthSummaryOf, groupsByDateOf, removeRecord, updateRecord, initData } =
 
 const heroRef = ref(null);
 const contentMarginTop = ref('0px');
+const isInit = ref(false)
 
 function updateContentMarginTop() {
   nextTick(() => {
@@ -126,8 +127,10 @@ function updateContentMarginTop() {
 
 onMounted(async () => {
   try {
+    isInit.value = true;
     await initData();
     updateContentMarginTop();
+    isInit.value = false;
   } catch (error) {
     console.error('初始化数据失败:', error);
   }

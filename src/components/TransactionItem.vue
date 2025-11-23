@@ -13,9 +13,11 @@
         >
           <template #title>
             <div class="title-row">
-              <div :class="['icon-box', (record.type === 'expense' ? 'icon-expense' : 'icon-income')]">
-                {{ icon }}
-              </div>
+              <img 
+                :class="['icon-box', (record.type === 'expense' ? 'icon-expense' : 'icon-income')]"
+                :src="getImageUrl(record.type, record.category)"
+                alt="图标"
+              />
               <span class="title-text">{{ title }}</span>
             </div>
           </template>
@@ -110,13 +112,13 @@
       <div class="popup-header">选择类别</div>
       <div class="category-grid">
         <div 
-          v-for="(category, index) in currentCategories" 
+          v-for="(categoryItem, index) in currentCategories.value" 
           :key="index"
           class="category-chip"
-          :class="{ active: editForm.category === category }"
-          @click="selectCategory(category)"
+          :class="{ active: editForm.category === categoryItem.text }"
+          @click="selectCategory(categoryItem.text)"
         >
-          {{ category }}
+          {{ categoryItem.text }}
         </div>
       </div>
       <div class="popup-footer">
@@ -146,14 +148,35 @@
 
 <script setup>
 import { computed, ref } from 'vue';
-import { formatAmount } from '../composables/useLedger';
+import { formatAmount, useLedger } from '../composables/useLedger';
 
 const props = defineProps({
   record: { type: Object, required: true }
 });
 
-const emit = defineEmits(['remove', 'update']);
+const { expenseCategories, incomeCategories } = useLedger();
 
+const emit = defineEmits(['remove', 'update']);
+const getImageUrl = (type, category) => {
+  try{
+    let path = '默认/default.png'
+    if(type === 'expense'){
+      const target = expenseCategories.value.find(item => item.value === category)
+      path = target? target.icon : path
+    }else if(type === 'income'){
+      const target = incomeCategories.value.find(item => item.value === category)
+      path = target? target.icon : path
+    }else{
+      path = '默认/default.png'
+    }
+    // 兼容处理：如果是完整的路径(Emoji)或者图片相对路径
+    // 这里的 name 预期是 "食物/food1.png" 这种格式
+    return new URL(`../assets/${path}`, import.meta.url).href;
+  }catch(error){
+  console.error('获取图片URL时出错:', error);
+  return path;
+}
+};
 // 编辑相关变量
 const showEditDialog = ref(false);
 const showCategoryPicker = ref(false);
@@ -166,9 +189,6 @@ const editForm = ref({
   date: ''
 });
 
-// 类别列表定义
-const expenseCategories = ['餐饮','买菜','购物','交通','娱乐','通讯','零食','日用','蔬菜','水果','运动','服饰','美容','住房','医疗','孩子','长辈','旅行','聚会','其他'];
-const incomeCategories = ['工资','兼职','理财','其他'];
 
 // 日期时间选择相关
 const now = new Date();
@@ -230,7 +250,7 @@ const openEditDialog = () => {
 // 类型改变时的处理
 const onTypeChange = () => {
   // 当类型改变时，检查当前类别是否在新类型的类别列表中
-  const categories = editForm.value.type === 'expense' ? expenseCategories : incomeCategories;
+  const categories = editForm.value.type === 'expense' ? expenseCategories.value : incomeCategories.value;
   if (!categories.includes(editForm.value.category)) {
     // 如果不在，设置为第一个类别或默认类别
     editForm.value.category = categories[0];
@@ -292,35 +312,6 @@ const handleUpdate = () => {
 const title = computed(() => `${props.record.category}`);
 const label = computed(() => (props.record.note || ''));
 const value = computed(() => (props.record.type === 'expense' ? '-' : '+') + formatAmount(props.record.amount));
-
-const categoryIconMap = {
-  '餐饮': '🍜',
-  '买菜': '🍖',
-  '购物': '🛍️',
-  '交通': '🚌',
-  '娱乐': '🎮',
-  '通讯': '📞',
-  '零食': '🧁',
-  '医疗': '💊',
-  '住房': '🏠',
-  '日用': '🧻',
-  '蔬菜': '🥕',
-  '水果': '🍎',
-  '运动': '🚴',
-  '服饰': '👕',
-  '美容': '💄',
-  '住房': '🏠',
-  '医疗': '💊',
-  '孩子': '🧒',
-  '长辈': '🧓',
-  '旅行': '✈️',
-  '聚会': '🍷',
-  '其他': '📦',
-  '工资': '💰',
-  '兼职': '🧾',
-  '理财': '📈' ,
-  '其他2': '💵',
-};
 
 const icon = computed(() => {
     if(props.record.category === "其他" && props.record.type === "income"){
