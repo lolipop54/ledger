@@ -326,9 +326,6 @@ const icon = computed(() => {
 /* --clash-black: #2D3436; --clash-orange: #FF7675; --clash-green: #00B894; */
 
 .swipe-wrapper {
-  margin-bottom: 12px;
-  /* 防止 swipe cell 阴影被切 */
-  padding-bottom: 4px; 
 }
 
 /* --- 列表卡片 --- */
@@ -408,7 +405,6 @@ const icon = computed(() => {
   justify-content: center;
   font-size: 20px;
   color: #fff;
-  border-top: 2px solid var(--clash-black, #2D3436);
   border-bottom: 2px solid var(--clash-black, #2D3436);
   /* border-left: 2px solid var(--clash-black, #2D3436); */
   cursor: pointer;

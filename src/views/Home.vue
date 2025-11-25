@@ -244,7 +244,7 @@ const onUpdate = (id, updates) => {
   
   /* 去除原来的外边距，改为内填充 */
   padding: 0;
-  padding-top: 20px; /* 适配状态栏高度，可根据需要调整或用 env */
+  padding-top: 0px; /* 适配状态栏高度，可根据需要调整或用 env */
 }
 
 .hero-inner {
@@ -252,7 +252,7 @@ const onUpdate = (id, updates) => {
   background: transparent;
   border: none;
   box-shadow: none;
-  padding: 16px 20px 24px; /* 内部留白 */
+  padding: 32px 20px 20px 20px; /* 内部留白 */
   position: relative;
   overflow: hidden;
   border-radius: 0 0 24px 24px; /* 确保内容不溢出 */
@@ -369,7 +369,8 @@ const onUpdate = (id, updates) => {
   background: var(--clash-white, #fff);
   border: 2px solid var(--clash-black, #2D3436);
   border-radius: 16px;
-  box-shadow: 4px 4px 0px var(--clash-black, #2D3436);
+  padding-bottom: 16px;
+  box-shadow: 4px 4px 2px var(--clash-black, #2D3436);
   margin-bottom: 20px;
   overflow: hidden;
   animation: slideUp 0.4s ease-out;
