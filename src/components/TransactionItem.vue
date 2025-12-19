@@ -251,9 +251,9 @@ const openEditDialog = () => {
 const onTypeChange = () => {
   // 当类型改变时，检查当前类别是否在新类型的类别列表中
   const categories = editForm.value.type === 'expense' ? expenseCategories.value : incomeCategories.value;
-  if (!categories.includes(editForm.value.category)) {
-    // 如果不在，设置为第一个类别或默认类别
-    editForm.value.category = categories[0];
+  // 如果不在，设置为第一个类别或默认类别
+  if (!categories.some(c => c.text === editForm.value.category)) {
+    editForm.value.category = categories[0]?.text || '其他';
   }
 };
 

@@ -49,7 +49,9 @@
 </template>
 
 <script setup>
-import { ref, provide } from 'vue';
+import { ref, provide, onMounted, onUnmounted } from 'vue';
+import { App as CapacitorApp } from '@capacitor/app';
+import { showToast } from 'vant';
 
 // 简单的日期处理逻辑保留
 const nowYM = new Date().toLocaleString('zh-CN', { 
@@ -58,6 +60,37 @@ const nowYM = new Date().toLocaleString('zh-CN', {
 
 const sharedCurrentYM = ref(nowYM);
 provide('sharedCurrentYM', sharedCurrentYM);
+
+// 双击返回退出逻辑
+const lastBackTime = ref(0);
+const BACK_EXIT_THRESHOLD = 2000; // 2秒内双击有效
+
+const handleBackButton = async () => {
+  const now = Date.now();
+  if (now - lastBackTime.value < BACK_EXIT_THRESHOLD) {
+    // 退出应用
+    await CapacitorApp.exitApp();
+  } else {
+    // 提示再按一次
+    lastBackTime.value = now;
+    showToast('再按一次退出应用');
+  }
+};
+
+onMounted(() => {
+  // 监听 Android 物理返回键
+  CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+    if (!canGoBack) {
+      handleBackButton();
+    } else {
+      window.history.back();
+    }
+  });
+});
+
+onUnmounted(() => {
+  CapacitorApp.removeAllListeners();
+});
 </script>
 
 <style>
