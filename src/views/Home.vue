@@ -489,7 +489,7 @@ const onUpdate = (id, updates) => {
 :deep(.custom-popup) {
   background: transparent !important;
   padding: 16px;
-  padding-bottom: 30px; /* 适配底部安全区 */
+  padding-bottom: 30px; 
 }
 
 :deep(.custom-picker) {
