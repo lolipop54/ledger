@@ -196,6 +196,41 @@
 
       <!-- 年统计视图 -->
       <div v-else class="year-view">
+        <!-- 汇总卡片 -->
+        <div class="summary-cards">
+          <div class="summary-card income-card">
+            <div class="card-inner">
+              <div class="card-icon-box">📈</div>
+              <div class="card-info">
+                <div class="card-label">年度收入</div>
+                <div class="card-value">¥ {{ format(yearStats.totalIncome) }}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="summary-card expense-card">
+            <div class="card-inner">
+              <div class="card-icon-box">📉</div>
+              <div class="card-info">
+                <div class="card-label">年度支出</div>
+                <div class="card-value">¥ {{ format(yearStats.totalExpense) }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="summary-card balance-card">
+            <div class="card-inner">
+              <div class="card-icon-box">💰</div>
+              <div class="card-info">
+                <div class="card-label">年度结余</div>
+                <div class="card-value" :class="{ 'negative': yearStats.totalIncome - yearStats.totalExpense < 0 }">
+                  ¥ {{ format(yearStats.totalIncome - yearStats.totalExpense) }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 年度趋势图 -->
         <div class="chart-section">
           <div class="section-header">
@@ -516,7 +551,9 @@ const yearStats = computed(() => {
   return {
     monthlyTrend,
     expenseRanking,
-    incomeRanking
+    incomeRanking,
+    totalIncome,
+    totalExpense
   };
 });
 
