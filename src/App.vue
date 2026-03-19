@@ -52,6 +52,7 @@
 import { ref, provide, onMounted, onUnmounted } from 'vue';
 import { App as CapacitorApp } from '@capacitor/app';
 import { showToast } from 'vant';
+import { useSms } from './composables/useSms';
 
 // 简单的日期处理逻辑保留
 const nowYM = new Date().toLocaleString('zh-CN', { 
@@ -60,6 +61,8 @@ const nowYM = new Date().toLocaleString('zh-CN', {
 
 const sharedCurrentYM = ref(nowYM);
 provide('sharedCurrentYM', sharedCurrentYM);
+
+const { initSmsListener } = useSms();
 
 // 双击返回退出逻辑
 const lastBackTime = ref(0);
@@ -78,6 +81,9 @@ const handleBackButton = async () => {
 };
 
 onMounted(() => {
+  // 初始化短信监听
+  initSmsListener();
+
   // 监听 Android 物理返回键
   CapacitorApp.addListener('backButton', ({ canGoBack }) => {
     if (!canGoBack) {

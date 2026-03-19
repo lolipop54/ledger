@@ -11,6 +11,7 @@
     "build": "vite build",
     "cap:copy": "npx cap copy",
     "cap:sync": "npx cap sync",
+    "once": "vite build && npx cap sync",
     "cap:open:android": "npx cap open android",
     "android:release": "cd android && (gradlew.bat assembleRelease || ./gradlew assembleRelease)"
   },
