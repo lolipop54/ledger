@@ -26,9 +26,10 @@ public class SmsReceiver extends BroadcastReceiver {
     private static final String TAG = "SmsReceiver";
     private static final String CHANNEL_ID = "LedgerSmsChannel";
     
-    // 范本：您的借记卡账户长城电子借记卡，于03月15日网上支付支取人民币50.00元,交易后余额392.93【中国银行】
-    private static final Pattern EXPENSE_PATTERN = Pattern.compile("于(\\d{2}月\\d{2}日).*?(支取|消费|支出).*?(?:人民币)?([0-9.]+)(?:元)?");
-    private static final Pattern INCOME_PATTERN = Pattern.compile("于(\\d{2}月\\d{2}日).*?(转入|汇入|存入|收入).*?(?:人民币)?([0-9.]+)(?:元)?");
+    // 范本1：您的借记卡账户长城电子借记卡，于03月15日网上支付支取人民币50.00元,交易后余额392.93【中国银行】
+    // 范本2：尾号5166卡3月20日11:41手机银行支出(信使费)30元，余额489.57元。【工商银行】
+    private static final Pattern EXPENSE_PATTERN = Pattern.compile("(?:于)?(\\d{1,2}月\\d{1,2}日).*?(支取|消费|支出).*?(?:人民币)?([0-9.]+)(?:元)?");
+    private static final Pattern INCOME_PATTERN = Pattern.compile("(?:于)?(\\d{1,2}月\\d{1,2}日).*?(转入|汇入|存入|收入).*?(?:人民币)?([0-9.]+)(?:元)?");
 
     @Override
     public void onReceive(Context context, Intent intent) {

@@ -41,10 +41,10 @@ export function useSms() {
           }).replace(/\//g, '-');
           
           if (tx.dateStr) {
-            const match = tx.dateStr.match(/(\d{2})月(\d{2})日/);
+            const match = tx.dateStr.match(/(\d{1,2})月(\d{1,2})日/);
             if (match) {
-              const month = match[1];
-              const day = match[2];
+              const month = match[1].padStart(2, '0');
+              const day = match[2].padStart(2, '0');
               dateFormatted = `${currentYear}-${month}-${day} 00:00:00`;
             }
           }
