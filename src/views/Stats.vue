@@ -93,7 +93,7 @@
             >
               <div class="list-item"
                 @click="toggleCategoryExpand($event, item.category, 'expense')"
-                :class="{ 'active': expandedCategories[`expense_${item.category}`] }"
+                :class="{ 'active': expandedCategories[`${currentView}_expense_${item.category}`] }"
               >
                 <div class="list-item-main">
                   <div class="category-color-dot" :style="{ backgroundColor: item.color }"></div>
@@ -103,7 +103,7 @@
                     <div class="percentage">{{ item.percentage }}%</div>
                   </div>
                   <div class="expand-arrow">
-                    {{ expandedCategories[`expense_${item.category}`] ? '▼' : '▶' }}
+                    {{ expandedCategories[`${currentView}_expense_${item.category}`] ? '▼' : '▶' }}
                   </div>
                 </div>
                 
@@ -112,7 +112,7 @@
               </div>
               
               <!-- 排行榜 (展开内容) -->
-              <div class="ranking-panel" v-if="expandedCategories[`expense_${item.category}`]">
+              <div class="ranking-panel" v-if="expandedCategories[`${currentView}_expense_${item.category}`]">
                 <div class="ranking-header">🏆 TOP 10</div>
                 <div class="ranking-list">
                   <div class="ranking-row"
@@ -157,7 +157,7 @@
             >
               <div class="list-item"
                 @click="toggleCategoryExpand($event, item.category, 'income')"
-                :class="{ 'active': expandedCategories[`income_${item.category}`] }"
+                :class="{ 'active': expandedCategories[`${currentView}_income_${item.category}`] }"
               >
                 <div class="list-item-main">
                   <div class="category-color-dot" :style="{ backgroundColor: item.color }"></div>
@@ -167,13 +167,13 @@
                     <div class="percentage">{{ item.percentage }}%</div>
                   </div>
                   <div class="expand-arrow">
-                    {{ expandedCategories[`income_${item.category}`] ? '▼' : '▶' }}
+                    {{ expandedCategories[`${currentView}_income_${item.category}`] ? '▼' : '▶' }}
                   </div>
                 </div>
                 <div class="progress-bg" :style="{ width: item.percentage + '%', backgroundColor: item.color }"></div>
               </div>
               
-              <div class="ranking-panel" v-if="expandedCategories[`income_${item.category}`]">
+              <div class="ranking-panel" v-if="expandedCategories[`${currentView}_income_${item.category}`]">
                 <div class="ranking-header">🏆 TOP 10</div>
                 <div class="ranking-list">
                   <div class="ranking-row"
@@ -257,7 +257,7 @@
             >
               <div class="list-item"
                 @click="toggleCategoryExpand($event, item.category, 'expense')"
-                :class="{ 'active': expandedCategories[`expense_${item.category}`] }"
+                :class="{ 'active': expandedCategories[`${currentView}_expense_${item.category}`] }"
               >
                 <div class="list-item-main">
                   <div class="category-color-dot" :style="{ backgroundColor: item.color }"></div>
@@ -267,14 +267,14 @@
                     <div class="percentage">{{ item.percentage }}%</div>
                   </div>
                   <div class="expand-arrow">
-                    {{ expandedCategories[`expense_${item.category}`] ? '▼' : '▶' }}
+                    {{ expandedCategories[`${currentView}_expense_${item.category}`] ? '▼' : '▶' }}
                   </div>
                 </div>
                 <div class="progress-bg" :style="{ width: item.percentage + '%', backgroundColor: item.color }"></div>
               </div>
 
               <!-- 排行榜 (展开内容) -->
-              <div class="ranking-panel" v-if="expandedCategories[`expense_${item.category}`]">
+              <div class="ranking-panel" v-if="expandedCategories[`${currentView}_expense_${item.category}`]">
                 <div class="ranking-header">🏆 TOP 10</div>
                 <div class="ranking-list">
                   <div class="ranking-row"
@@ -313,7 +313,7 @@
             >
               <div class="list-item"
                 @click="toggleCategoryExpand($event, item.category, 'income')"
-                :class="{ 'active': expandedCategories[`income_${item.category}`] }"
+                :class="{ 'active': expandedCategories[`${currentView}_income_${item.category}`] }"
               >
                 <div class="list-item-main">
                   <div class="category-color-dot" :style="{ backgroundColor: item.color }"></div>
@@ -323,14 +323,14 @@
                     <div class="percentage">{{ item.percentage }}%</div>
                   </div>
                   <div class="expand-arrow">
-                    {{ expandedCategories[`income_${item.category}`] ? '▼' : '▶' }}
+                    {{ expandedCategories[`${currentView}_income_${item.category}`] ? '▼' : '▶' }}
                   </div>
                 </div>
                 <div class="progress-bg" :style="{ width: item.percentage + '%', backgroundColor: item.color }"></div>
               </div>
 
               <!-- 排行榜 (展开内容) -->
-              <div class="ranking-panel" v-if="expandedCategories[`income_${item.category}`]">
+              <div class="ranking-panel" v-if="expandedCategories[`${currentView}_income_${item.category}`]">
                 <div class="ranking-header">🏆 TOP 10</div>
                 <div class="ranking-list">
                   <div class="ranking-row"
@@ -570,7 +570,7 @@ const highlightCategory = (category) => {
 
 const toggleCategoryExpand = (event, category, type) => {
   event.stopPropagation();
-  const key = `${type}_${category}`;
+  const key = `${currentView.value}_${type}_${category}`;
   expandedCategories.value[key] = !expandedCategories.value[key];
   highlightCategory(category);
 };
