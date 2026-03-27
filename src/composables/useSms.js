@@ -27,6 +27,8 @@ export function useSms() {
 
       if (transactions && transactions.length > 0) {
         // Ensure data is synced before adding records
+        // Always await initData to guarantee storageManager is initialized. 
+        // If it's already initialized but records are empty, it will just fast-path.
         if (!records.value || records.value.length === 0) {
           await initData();
         }

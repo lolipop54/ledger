@@ -51,7 +51,7 @@ class StorageManager {
     this.isInitialized = false;
     this.recordsCache = [];
     this.categoriesCache = null;
-    this.init();
+    this.initPromise = this.init();
   }
 
   async init() {
@@ -384,7 +384,7 @@ export function useLedger() {
     isLoading.value = true;
     try {
       if (!storageManager.isInitialized) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await storageManager.initPromise;
       }
       // 从 StorageManager 获取数据同步到 refs
       records.value = storageManager.getRecords();

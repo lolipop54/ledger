@@ -28,8 +28,8 @@ public class SmsReceiver extends BroadcastReceiver {
     
     // 范本1：您的借记卡账户长城电子借记卡，于03月15日网上支付支取人民币50.00元,交易后余额392.93【中国银行】
     // 范本2：尾号5166卡3月20日11:41手机银行支出(信使费)30元，余额489.57元。【工商银行】
-    private static final Pattern EXPENSE_PATTERN = Pattern.compile("(?:于)?(\\d{1,2}月\\d{1,2}日).*?(支取|消费|支出).*?(?:人民币)?([0-9.]+)(?:元)?");
-    private static final Pattern INCOME_PATTERN = Pattern.compile("(?:于)?(\\d{1,2}月\\d{1,2}日).*?(转入|汇入|存入|收入).*?(?:人民币)?([0-9.]+)(?:元)?");
+    private static final Pattern EXPENSE_PATTERN = Pattern.compile("(?:于)?(\\d{1,2}月\\d{1,2}日).*?(支取|消费|支出).*?(?:人民币)?([0-9.,]+)(?:元)?");
+    private static final Pattern INCOME_PATTERN = Pattern.compile("(?:于)?(\\d{1,2}月\\d{1,2}日).*?(转入|汇入|存入|收入).*?(?:人民币)?([0-9.,]+)(?:元)?");
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -69,7 +69,7 @@ public class SmsReceiver extends BroadcastReceiver {
             Matcher matcher = isExpense ? expenseMatcher : incomeMatcher;
             String dateStr = matcher.group(1); // e.g., 03月15日
             String action = matcher.group(2); // e.g., 支取 or 转入
-            String amountStr = matcher.group(3); // e.g., 50.00
+            String amountStr = matcher.group(3).replace(",", ""); // e.g., 2,349.43 -> 2349.43
             
             String bankName = "银行";
             Matcher bankMatcher = Pattern.compile("【(.*?)】").matcher(msgBody);
