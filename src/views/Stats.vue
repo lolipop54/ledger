@@ -3,6 +3,10 @@
     <!-- 导航栏 -->
     <div class="clash-nav">
       <div class="nav-title">统计看板</div>
+      <div class="nav-export-btn" @click="showExportDialog = true">
+        <van-icon name="arrow-up" size="16" />
+        <span>导出</span>
+      </div>
     </div>
 
     <!-- 顶部控制区 (固定在导航栏下方) -->
@@ -356,13 +360,44 @@
 
       </div>
     </div>
+
+    <!-- 导出弹窗 -->
+    <van-popup
+      v-model:show="showExportDialog"
+      position="bottom"
+      class="custom-popup"
+      :overlay-style="{ background: 'rgba(0,0,0,0.5)' }"
+      round
+    >
+      <div class="export-dialog">
+        <div class="export-title">导出记账数据</div>
+        <div class="export-desc">将全部记账数据导出为 JSON 文件，可用于迁移到其他记账应用（如 ledger_flutter）。</div>
+        <div class="export-info">
+          <span>共 {{ exportStats.recordCount }} 条记录</span>
+          <span>{{ exportStats.dateRange }}</span>
+        </div>
+        <div class="export-actions">
+          <van-button type="primary" block round @click="doExportDownload">
+            <van-icon name="down" size="16" style="margin-right:6px" />
+            下载 JSON 文件
+          </van-button>
+          <van-button plain block round @click="doExportCopy" style="margin-top:10px">
+            <van-icon name="records" size="16" style="margin-right:6px" />
+            复制 JSON 到剪贴板
+          </van-button>
+        </div>
+        <div class="export-cancel" @click="showExportDialog = false">取消</div>
+      </div>
+    </van-popup>
   </div>
 </template>
 
 <script setup>
 import { computed, inject, ref, onMounted, nextTick, watch, onUnmounted } from 'vue';
 import { NavBar as VanNavBar, Cell as VanCell, CellGroup as VanCellGroup } from 'vant';
+import { showToast } from 'vant';
 import { useLedger, formatAmount } from '../composables/useLedger';
+import { generateExportJson, downloadExportFile, copyExportToClipboard } from '../composables/useExport';
 import * as echarts from 'echarts';
 
 const { records, initData } = useLedger();
@@ -802,6 +837,46 @@ onUnmounted(() => {
   if (yearTrendChartInstance) yearTrendChartInstance.dispose();
 });
 
+// ========== 导出功能 ==========
+const showExportDialog = ref(false);
+
+const exportStats = computed(() => {
+  const recs = records.value || [];
+  let dateRange = '';
+  if (recs.length > 0) {
+    const dates = recs.map(r => (r.date || '').slice(0, 10)).filter(Boolean).sort();
+    if (dates.length > 0) {
+      dateRange = `${dates[0]} ~ ${dates[dates.length - 1]}`;
+    }
+  }
+  return {
+    recordCount: recs.length,
+    dateRange: dateRange || '无记录',
+  };
+});
+
+async function doExportDownload() {
+  try {
+    const result = await downloadExportFile();
+    if (result.success) {
+      showToast(result.message || '导出成功！');
+    } else {
+      showToast(result.message || '导出失败');
+    }
+  } catch (e) {
+    showToast('导出失败: ' + e.message);
+  }
+}
+
+async function doExportCopy() {
+  try {
+    await copyExportToClipboard();
+    showToast('已复制到剪贴板！');
+  } catch (e) {
+    showToast('复制失败: ' + e.message);
+  }
+}
+
 const format = (n) => formatAmount(n);
 </script>
 
@@ -836,6 +911,26 @@ const format = (n) => formatAmount(n);
   font-weight: 900;
   color: #2D3436;
   letter-spacing: 1px;
+}
+
+.nav-export-btn {
+  position: absolute;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  background: #2D3436;
+  color: #FDCB6E;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.nav-export-btn:active {
+  transform: scale(0.95);
+  opacity: 0.8;
 }
 
 /* 控制栏 (切换和日期) */
@@ -1138,5 +1233,46 @@ const format = (n) => formatAmount(n);
 .rank-note { font-size: 13px; font-weight: 600; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rank-date { font-size: 10px; color: #999; }
 .rank-amount { font-weight: 700; color: #2D3436; }
+
+/* 导出弹窗 */
+.export-dialog {
+  padding: 24px 20px 20px;
+}
+.export-title {
+  font-size: 18px;
+  font-weight: 900;
+  color: #2D3436;
+  text-align: center;
+  margin-bottom: 10px;
+}
+.export-desc {
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+.export-info {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  font-size: 12px;
+  color: #999;
+  background: #F0F2F5;
+  border-radius: 8px;
+  padding: 8px 16px;
+  margin-bottom: 20px;
+}
+.export-actions {
+  padding: 0 10px;
+}
+.export-cancel {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 14px;
+  color: #999;
+  cursor: pointer;
+  padding: 8px;
+}
 
 </style>
